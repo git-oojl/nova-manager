@@ -194,7 +194,16 @@ def signup_employee(request):
             messages.success(request, "Cuenta de empleado creada correctamente. ¡Bienvenido a Nova Manager!")
             return redirect('Menu')
     else:
-        form = EmployeeSignUpForm()
+        # If coming from the Empleado page, we may have ?nombre=Nombre Apellido
+        initial = {}
+        full_name = (request.GET.get("nombre") or "").strip()
+        if full_name:
+            partes = full_name.split()
+            if partes:
+                initial["first_name"] = partes[0]
+            if len(partes) > 1:
+                initial["last_name"] = " ".join(partes[1:])
+        form = EmployeeSignUpForm(initial=initial)
 
     return render(request, 'registration/signup.html', {"form": form})
 
