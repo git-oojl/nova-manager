@@ -12,6 +12,12 @@ from .decorators import admin_required
 
 from .models import Empleado as EmpleadoModel
 
+from django.db.models import Q
+from django.http import HttpResponse
+import json
+
+from .models import Empleado as EmpleadoModel
+
 # Create your views here.
 # Anyone logged in can see Menu
 @login_required
@@ -26,12 +32,107 @@ def Dashboard(request):
 @login_required
 @admin_required(redirect_to='Menu')
 def Empleado(request):
-    # Get all employees
-    empleados_qs = EmpleadoModel.objects.select_related("usuario").all().order_by("nombre", "apellido")
+    empleado_seleccionado = None
+    mensaje = None
+    error = None
 
+    # --- Export quick action: /Empleado/?export=json ---
+    if request.method == "GET" and request.GET.get("export") == "json":
+        data = list(
+            EmpleadoModel.objects.values(
+                "id", "nombre", "apellido", "email", "telefono", "puesto", "estado"
+            )
+        )
+        response = HttpResponse(
+            json.dumps(data, ensure_ascii=False, indent=2),
+            content_type="application/json",
+        )
+        response["Content-Disposition"] = 'attachment; filename="empleados.json"'
+        return response
+
+    # --- Handle form actions (POST) ---
+    if request.method == "POST":
+        action = request.POST.get("action")
+        form_id = (request.POST.get("id") or "").strip()
+        nombre_full = (request.POST.get("nombre") or "").strip()
+        departamento = (request.POST.get("departamento") or "").strip()  # de momento no se usa
+        puesto = (request.POST.get("puesto") or "").strip()
+        estatus = (request.POST.get("estatus") or "").strip()
+        empleado_pk = (request.POST.get("empleado_pk") or "").strip()
+
+        empleado_qs = EmpleadoModel.objects.all()
+
+        # Buscar por ID o nombre
+        if form_id:
+            if form_id.isdigit():
+                empleado_qs = empleado_qs.filter(id=int(form_id))
+            else:
+                # Permite cosas tipo EMP001 o usuario
+                digits = "".join(ch for ch in form_id if ch.isdigit())
+                q = Q(usuario__username__iexact=form_id)
+                if digits.isdigit():
+                    q |= Q(id=int(digits))
+                empleado_qs = empleado_qs.filter(q)
+        elif nombre_full:
+            partes = nombre_full.split()
+            q = Q()
+            for p in partes:
+                q |= Q(nombre__icontains=p) | Q(apellido__icontains=p)
+            empleado_qs = empleado_qs.filter(q)
+
+        # --- Buscar ---
+        if action == "buscar":
+            empleado_seleccionado = empleado_qs.first()
+            if empleado_seleccionado:
+                mensaje = "Empleado encontrado."
+            else:
+                error = "No se encontró ningún empleado con esos datos."
+
+        # --- Agregar / Actualizar (realmente editar) ---
+        elif action in ("agregar", "actualizar"):
+            # Sólo editamos empleados existentes
+            if empleado_pk:
+                try:
+                    empleado_seleccionado = EmpleadoModel.objects.get(pk=int(empleado_pk))
+                except (EmpleadoModel.DoesNotExist, ValueError):
+                    empleado_seleccionado = None
+            if empleado_seleccionado is None:
+                empleado_seleccionado = empleado_qs.first()
+
+            if empleado_seleccionado is None:
+                error = "Primero busca un empleado para poder actualizar sus datos."
+            else:
+                if puesto:
+                    empleado_seleccionado.puesto = puesto
+                # Estatus simple: activo = True, todo lo demás = False
+                if estatus:
+                    if estatus == "activo":
+                        empleado_seleccionado.estado = True
+                    else:
+                        empleado_seleccionado.estado = False
+                empleado_seleccionado.save()
+                mensaje = "Datos del empleado actualizados correctamente."
+
+        # --- Eliminar (baja lógica) ---
+        elif action == "eliminar":
+            if empleado_pk:
+                try:
+                    empleado_seleccionado = EmpleadoModel.objects.get(pk=int(empleado_pk))
+                except (EmpleadoModel.DoesNotExist, ValueError):
+                    empleado_seleccionado = None
+            if empleado_seleccionado is None:
+                empleado_seleccionado = empleado_qs.first()
+            if empleado_seleccionado is None:
+                error = "No se encontró el empleado a eliminar."
+            else:
+                empleado_seleccionado.estado = False
+                empleado_seleccionado.save()
+                mensaje = "Empleado marcado como inactivo."
+
+    # --- Datos para estadísticas y tabla ---
+    empleados_qs = EmpleadoModel.objects.select_related("usuario").all().order_by("nombre", "apellido")
     total_empleados = empleados_qs.count()
     empleados_activos = empleados_qs.filter(estado=True).count()
-    # For now we approximate "departments" with distinct 'puesto'
     departamentos_count = (
         empleados_qs.exclude(puesto="")
         .values_list("puesto", flat=True)
@@ -39,11 +140,19 @@ def Empleado(request):
         .count()
     )
 
+    estatus_actual = None
+    if empleado_seleccionado is not None:
+        estatus_actual = "activo" if empleado_seleccionado.estado else "inactivo"
+
     context = {
         "empleados": empleados_qs,
         "total_empleados": total_empleados,
         "empleados_activos": empleados_activos,
         "departamentos_count": departamentos_count,
+        "empleado_seleccionado": empleado_seleccionado,
+        "estatus_actual": estatus_actual,
+        "mensaje": mensaje,
+        "error": error,
     }
     return render(request, "Empleado.html", context)
 
