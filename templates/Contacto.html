@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Notificaciones - Nova Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #B4E9B7 0%, #a8e3ab 100%);
+            min-height: 100vh;
+        }
+
+        /* Barra superior */
+        .top-nav {
+            background-color: #fff;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #296A2D 0%, #63BA68 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(41, 106, 45, 0.3);
+        }
+
+        .logo-text h2 {
+            color: #296A2D;
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .breadcrumb a {
+            color: #296A2D;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumb span {
+            color: #999;
+        }
+
+        /* Menú de navegación */
+        .menu-bar {
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .menu-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 0;
+        }
+
+        .menu-btn {
+            background-color: transparent;
+            color: #333;
+            border: none;
+            padding: 18px 35px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .menu-btn.active {
+            color: #296A2D;
+            background-color: rgba(180, 233, 183, 0.2);
+        }
+
+        .menu-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #296A2D, #63BA68);
+        }
+
+        .menu-btn:hover {
+            color: #296A2D;
+            background-color: rgba(180, 233, 183, 0.1);
+        }
+
+        /* Contenido principal */
+        .main-content {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 30px;
+        }
+
+        .page-header {
+            background: white;
+            padding: 35px 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            color: #296A2D;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        /* Estadísticas */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #B4E9B7 0%, #63BA68 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .stat-content h3 {
+            color: #296A2D;
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .stat-content p {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        /* Plantillas rápidas */
+        .quick-templates {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .templates-title {
+            color: #296A2D;
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .template-card {
+            background: linear-gradient(135deg, #B4E9B7 0%, #63BA68 100%);
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .template-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(41, 106, 45, 0.3);
+        }
+
+        .template-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .template-card h4 {
+            color: #296A2D;
+            font-size: 1.05em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .template-card p {
+            color: #1f5323;
+            font-size: 0.85em;
+        }
+
+        /* Formulario */
+        .form-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-header {
+            border-bottom: 3px solid #B4E9B7;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-header h2 {
+            color: #296A2D;
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .form-header p {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            color: #296A2D;
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .required-indicator {
+            color: #e74c3c;
+            margin-left: 3px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.95em;
+            color: #333;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #63BA68;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(99, 186, 104, 0.1);
+        }
+
+        .recipients-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .recipient-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .recipient-option:hover {
+            background: linear-gradient(135deg, #B4E9B7 0%, #a8e3ab 100%);
+            border-color: #63BA68;
+        }
+
+        .recipient-option input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #296A2D;
+        }
+
+        .recipient-option label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left: 4px solid #296A2D;
+            padding: 18px 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: start;
+            gap: 15px;
+        }
+
+        .info-icon {
+            font-size: 1.8em;
+            color: #296A2D;
+        }
+
+        .info-box p {
+            color: #1f5323;
+            font-size: 0.95em;
+            line-height: 1.7;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 3px solid #e0e0e0;
+        }
+
+        .btn {
+            padding: 16px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #296A2D 0%, #1f5323 100%);
+            color: white;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(41, 106, 45, 0.4);
+        }
+
+        .btn-preview {
+            background: linear-gradient(135deg, #63BA68 0%, #4fa157 100%);
+            color: white;
+        }
+
+        .btn-preview:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 186, 104, 0.4);
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
+            color: #333;
+        }
+
+        .btn-clear:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Mensaje de éxito */
+        .success-message {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 2px solid #28a745;
+            color: #155724;
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            animation: slideIn 0.4s ease;
+        }
+
+        .success-message.show {
+            display: flex;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .success-icon {
+            font-size: 2em;
+        }
+
+        .success-content h3 {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .success-content p {
+            font-size: 0.95em;
+        }
+
+        @media (max-width: 768px) {
+            .menu-container {
+                flex-wrap: wrap;
+            }
+
+            .menu-btn {
+                flex: 1;
+                min-width: 100px;
+                padding: 15px 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                padding: 25px 20px;
+            }
+
+            .form-container {
+                padding: 25px;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .template-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .recipients-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script>
+        function cargarPlantilla(tipo) {
+            let asunto = '';
+            let mensaje = '';
+            
+            switch(tipo) {
+                case 'reunion':
+                    asunto = 'Convocatoria a Reunión General';
+                    mensaje = 'Estimado/a empleado/a,\n\nPor medio de la presente, se le convoca a una reunión general que se llevará a cabo:\n\nFecha: [FECHA]\nHora: [HORA]\nLugar: [LUGAR]\n\nTemas a tratar:\n- Punto 1\n- Punto 2\n- Punto 3\n\nEs importante su asistencia.\n\nSaludos cordiales,\nDepartamento de Recursos Humanos';
+                    break;
+                case 'capacitacion':
+                    asunto = 'Invitación a Capacitación';
+                    mensaje = 'Estimado/a empleado/a,\n\nTenemos el gusto de invitarle a participar en la capacitación:\n\nTema: [TEMA]\nFecha: [FECHA]\nHorario: [HORARIO]\nModalidad: [PRESENCIAL/VIRTUAL]\n\nEsta capacitación tiene como objetivo mejorar sus habilidades en [ÁREA].\n\nPor favor confirme su asistencia.\n\nSaludos cordiales,\nDepartamento de Recursos Humanos';
+                    break;
+                case 'aviso':
+                    asunto = 'Aviso Importante';
+                    mensaje = 'Estimado/a empleado/a,\n\nLe informamos sobre [ASUNTO]:\n\n[DETALLES DEL AVISO]\n\nEsto es aplicable a partir de [FECHA].\n\nPara cualquier duda, favor de contactar al departamento de RH.\n\nSaludos cordiales,\nDepartamento de Recursos Humanos';
+                    break;
+                case 'felicitacion':
+                    asunto = '¡Felicitaciones!';
+                    mensaje = 'Estimado/a [NOMBRE],\n\n¡Felicidades por [MOTIVO]!\n\nNos complace reconocer su excelente desempeño y dedicación. Su trabajo ha sido ejemplar y contribuye significativamente al éxito de la empresa.\n\nSiga así, ¡esperamos seguir contando con su valioso aporte!\n\nSaludos cordiales,\nDepartamento de Recursos Humanos';
+                    break;
+            }
+            
+            document.getElementById('asunto').value = asunto;
+            document.getElementById('mensaje').value = mensaje;
+            
+            alert('✅ Plantilla cargada. Puedes editarla según tus necesidades.');
+        }
+
+        function enviarNotificacion(event) {
+            event.preventDefault();
+            
+            const destinatarios = document.querySelectorAll('.recipient-option input[type="checkbox"]:checked');
+            const asunto = document.getElementById('asunto').value.trim();
+            const mensaje = document.getElementById('mensaje').value.trim();
+            
+            if (destinatarios.length === 0) {
+                alert('⚠️ Por favor selecciona al menos un destinatario.');
+                return false;
+            }
+            
+            if (!asunto || !mensaje) {
+                alert('⚠️ Por favor completa el asunto y el mensaje.');
+                return false;
+            }
+            
+            // Mostrar mensaje de éxito
+            const successMsg = document.getElementById('successMessage');
+            successMsg.classList.add('show');
+            
+            // Limpiar formulario
+            document.getElementById('notificacionForm').reset();
+            
+            // Ocultar mensaje después de 5 segundos
+            setTimeout(() => {
+                successMsg.classList.remove('show');
+            }, 5000);
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            return false;
+        }
+
+        function vistaPrevia() {
+            const asunto = document.getElementById('asunto').value.trim();
+            const mensaje = document.getElementById('mensaje').value.trim();
+            
+            if (!asunto || !mensaje) {
+                alert('⚠️ Por favor completa el asunto y el mensaje para ver la vista previa.');
+                return;
+            }
+            
+            const destinatarios = [];
+            document.querySelectorAll('.recipient-option input[type="checkbox"]:checked').forEach(checkbox => {
+                destinatarios.push(checkbox.nextElementSibling.textContent);
+            });
+            
+            let preview = `📧 VISTA PREVIA DEL CORREO\n\n`;
+            preview += `Destinatarios: ${destinatarios.length > 0 ? destinatarios.join(', ') : 'Ninguno seleccionado'}\n\n`;
+            preview += `Asunto: ${asunto}\n\n`;
+            preview += `Mensaje:\n${mensaje}`;
+            
+            alert(preview);
+        }
+
+        function limpiarFormulario() {
+            if (confirm('¿Deseas limpiar todos los campos del formulario?')) {
+                document.getElementById('notificacionForm').reset();
+                alert('🗑️ Formulario limpiado.');
+            }
+        }
+
+        function seleccionarTodos() {
+            const checkboxes = document.querySelectorAll('.recipient-option input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = true);
+        }
+
+        function deseleccionarTodos() {
+            const checkboxes = document.querySelectorAll('.recipient-option input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+    </script>
+</head>
+<body>
+    <!-- Barra superior -->
+    <div class="top-nav">
+        <div class="top-nav-container">
+            <div class="logo-section">
+                <div class="logo-icon">📧</div>
+                <div class="logo-text">
+                    <h2>Nova Manager</h2>
+                    <p>Sistema de Notificaciones</p>
+                </div>
+            </div>
+            <div class="breadcrumb">
+                <a href="{% url 'Menu' %}">Inicio</a>
+                <span>›</span>
+                <span>Contacto</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menú de navegación -->
+    <div class="menu-bar">
+        <div class="menu-container">
+            <button class="menu-btn" onclick="location.href='{% url 'Empleado' %}'">Empleado</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Asistencia' %}'">Asistencia</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Horarios' %}'">Horarios</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Reportes' %}'">Reportes</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Permisos' %}'">Permisos</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Contacto' %}'">Contacto</button>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <!-- Header de página -->
+        <div class="page-header">
+            <h1><span>📧</span> Sistema de Notificaciones y Comunicación</h1>
+            <p>Envía notificaciones, avisos y comunicados a los empleados de forma eficiente</p>
+        </div>
+
+        <!-- Mensaje de éxito -->
+        <div id="successMessage" class="success-message">
+            <span class="success-icon">✅</span>
+            <div class="success-content">
+                <h3>¡Correo enviado exitosamente!</h3>
+                <p>La notificación ha sido enviada a los destinatarios seleccionados.</p>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon">📧</div>
+                <div class="stat-content">
+                    <h3>342</h3>
+                    <p>Correos Enviados Hoy</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <h3>450</h3>
+                    <p>Empleados Activos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <h3>98.5%</h3>
+                    <p>Tasa de Entrega</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <h3>2,456</h3>
+                    <p>Total este Mes</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plantillas rápidas -->
+        <div class="quick-templates">
+            <h3 class="templates-title">
+                <span>⚡</span> Plantillas Rápidas
+            </h3>
+            <div class="template-grid">
+                <div class="template-card" onclick="cargarPlantilla('reunion')">
+                    <div class="template-icon">👥</div>
+                    <h4>Convocatoria a Reunión</h4>
+                    <p>Plantilla para reuniones generales</p>
+                </div>
+                <div class="template-card" onclick="cargarPlantilla('capacitacion')">
+                    <div class="template-icon">📚</div>
+                    <h4>Invitación a Capacitación</h4>
+                    <p>Notificación de cursos y talleres</p>
+                </div>
+                <div class="template-card" onclick="cargarPlantilla('aviso')">
+                    <div class="template-icon">⚠️</div>
+                    <h4>Aviso Importante</h4>
+                    <p>Comunicados generales</p>
+                </div>
+                <div class="template-card" onclick="cargarPlantilla('felicitacion')">
+                    <div class="template-icon">🎉</div>
+                    <h4>Felicitación</h4>
+                    <p>Reconocimientos y logros</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de notificación -->
+        <div class="form-container">
+            <div class="form-header">
+                <h2>Enviar Notificación</h2>
+                <p>Completa el formulario para enviar un correo electrónico a los empleados</p>
+            </div>
+
+            <form id="notificacionForm" method="post" onsubmit="return enviarNotificacion(event)">
+                {% csrf_token %}
+                
+                <!-- Destinatarios -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <span>👥</span> Destinatarios
+                    </h3>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button type="button" class="btn btn-preview" style="flex: 1; padding: 10px;" onclick="seleccionarTodos()">
+                            Seleccionar Todos
+                        </button>
+                        <button type="button" class="btn btn-clear" style="flex: 1; padding: 10px;" onclick="deseleccionarTodos()">
+                            Deseleccionar Todos
+                        </button>
+                    </div>
+                    
+                    <div class="recipients-selector">
+                        <div class="recipient-option">
+                            <input type="checkbox" id="todos" name="destinatarios" value="todos">
+                            <label for="todos">📧 Todos los Empleados</label>
+                        </div>
+                        <div class="recipient-option">
+                            <input type="checkbox" id="rh" name="destinatarios" value="rh">
+                            <label for="rh">👔 Recursos Humanos</label>
+                        </div>
+                        <div class="recipient-option">
+                            <input type="checkbox" id="ventas" name="destinatarios" value="ventas">
+                            <label for="ventas">💼 Ventas</label>
+                        </div>
+                        <div class="recipient-option">
+                            <input type="checkbox" id="marketing" name="destinatarios" value="marketing">
+                            <label for="marketing">📢 Marketing</label>
+                        </div>
+                        <div class="recipient-option">
+                            <input type="checkbox" id="finanzas" name="destinatarios" value="finanzas">
+                            <label for="finanzas">💰 Finanzas</label>
+                        </div>
+                        <div class="recipient-option">
+                            <input type="checkbox" id="tecnologia" name="destinatarios" value="tecnologia">
+                            <label for="tecnologia">💻 Tecnología</label>
+                        </div>
+                        <div class="recipient-option">
+                            <input type="checkbox" id="operaciones" name="destinatarios" value="operaciones">
+                            <label for="operaciones">⚙️ Operaciones</label>
+                        </div>
+                        <div class="recipient-option">
+                            <input type="checkbox" id="produccion" name="destinatarios" value="produccion">
+                            <label for="produccion">🏭 Producción</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenido del mensaje -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <span>✉️</span> Contenido del Mensaje
+                    </h3>
+                    
+                    <div class="info-box">
+                        <span class="info-icon">💡</span>
+                        <p><strong>Consejo:</strong> Usa las plantillas rápidas arriba para cargar mensajes predefinidos. Puedes editarlos según tus necesidades antes de enviar.</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="prioridad">
+                            Prioridad
+                            <span class="required-indicator">*</span>
+                        </label>
+                        <select id="prioridad" name="prioridad">
+                            <option value="normal">📋 Normal</option>
+                            <option value="alta">⚠️ Alta</option>
+                            <option value="urgente">🚨 Urgente</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="asunto">
+                            Asunto del Correo
+                            <span class="required-indicator">*</span>
+                        </label>
+                        <input type="text" id="asunto" name="asunto" placeholder="Ej: Reunión General - Viernes 22 de Noviembre">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mensaje">
+                            Mensaje
+                            <span class="required-indicator">*</span>
+                        </label>
+                        <textarea id="mensaje" name="mensaje" placeholder="Escribe aquí el contenido del mensaje que deseas enviar a los empleados..."></textarea>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="remitente">
+                                Nombre del Remitente
+                            </label>
+                            <input type="text" id="remitente" name="remitente" placeholder="Departamento de RH" value="Departamento de Recursos Humanos">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email-remitente">
+                                Email del Remitente
+                            </label>
+                            <input type="email" id="email-remitente" name="email-remitente" placeholder="rh@empresa.com" value="rh@empresa.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="adjuntos">
+                            Adjuntar Archivos (Opcional)
+                        </label>
+                        <input type="file" id="adjuntos" name="adjuntos" multiple style="padding: 10px;">
+                    </div>
+                </div>
+
+                <!-- Opciones adicionales -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <span>⚙️</span> Opciones Adicionales
+                    </h3>
+                    
+                    <div class="recipients-selector" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+                        <div class="recipient-option">
+                            <input type="checkbox" id="copia-remitente" name="copia-remitente" checked>
+                            <label for="copia-remitente">Enviar copia a mi correo</label>
+                        </div>
+                        <div class="recipient-option">
+                            <input type="checkbox" id="confirmacion-lectura" name="confirmacion-lectura">
+                            <label for="confirmacion-lectura">Solicitar confirmación de lectura</label>
+                        </div>
+                        <div class="recipient-option">
+                            <input type="checkbox" id="programar-envio" name="programar-envio">
+                            <label for="programar-envio">Programar envío</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="fecha-programada" style="display: none; margin-top: 15px;">
+                        <label for="fecha-envio">Fecha y Hora de Envío Programado</label>
+                        <input type="datetime-local" id="fecha-envio" name="fecha-envio">
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-send">
+                        <span>📤</span> Enviar Notificación
+                    </button>
+                    <button type="button" class="btn btn-preview" onclick="vistaPrevia()">
+                        <span>👁️</span> Vista Previa
+                    </button>
+                    <button type="button" class="btn btn-clear" onclick="limpiarFormulario()">
+                        <span>🗑️</span> Limpiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Mostrar/ocultar campo de fecha programada
+        document.getElementById('programar-envio').addEventListener('change', function() {
+            const fechaProgramada = document.getElementById('fecha-programada');
+            if (this.checked) {
+                fechaProgramada.style.display = 'block';
+            } else {
+                fechaProgramada.style.display = 'none';
+            }
+        });
+
+        // Si se selecciona "Todos los Empleados", deseleccionar otros
+        document.getElementById('todos').addEventListener('change', function() {
+            if (this.checked) {
+                document.querySelectorAll('.recipient-option input[type="checkbox"]').forEach(cb => {
+                    if (cb.id !== 'todos') {
+                        cb.checked = false;
+                    }
+                });
+            }
+        });
+
+        // Si se selecciona otro departamento, deseleccionar "Todos"
+        document.querySelectorAll('.recipient-option input[type="checkbox"]').forEach(checkbox => {
+            if (checkbox.id !== 'todos') {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        document.getElementById('todos').checked = false;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

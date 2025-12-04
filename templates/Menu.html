@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio - Nova Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #B4E9B7 0%, #63BA68 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Barra de navegación superior */
+        .top-nav {
+            background-color: #fff;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #296A2D 0%, #63BA68 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(41, 106, 45, 0.3);
+        }
+
+        .logo-text h2 {
+            color: #296A2D;
+            font-size: 1.4em;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-info p {
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .user-info span {
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #63BA68 0%, #296A2D 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+        }
+
+        /* Header principal */
+        .hero-section {
+            background: linear-gradient(135deg, #296A2D 0%, #1f5323 100%);
+            padding: 80px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-section h1 {
+            color: white;
+            font-size: 3.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: -1px;
+        }
+
+        .hero-section p {
+            color: #B4E9B7;
+            font-size: 1.3em;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 50px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            color: white;
+            font-size: 2.5em;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #B4E9B7;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Menú de navegación */
+        .menu-bar {
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .menu-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 0;
+        }
+
+        .menu-btn {
+            background-color: transparent;
+            color: #333;
+            border: none;
+            padding: 20px 40px;
+            font-size: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .menu-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #296A2D, #63BA68);
+            transition: width 0.3s ease;
+        }
+
+        .menu-btn:hover {
+            color: #296A2D;
+            background-color: rgba(180, 233, 183, 0.1);
+        }
+
+        .menu-btn:hover::after {
+            width: 80%;
+        }
+
+        /* Contenido principal */
+        .main-content {
+            max-width: 1400px;
+            margin: 60px auto;
+            padding: 0 30px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-header h2 {
+            color: #296A2D;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .section-header p {
+            color: #555;
+            font-size: 1.1em;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Tarjetas de características mejoradas */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 16px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #296A2D, #63BA68);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 40px rgba(41, 106, 45, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            filter: grayscale(0.3);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            filter: grayscale(0);
+            transform: scale(1.1);
+        }
+
+        .feature-card h3 {
+            color: #296A2D;
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .feature-card p {
+            color: #666;
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #B4E9B7 0%, #63BA68 100%);
+            color: #296A2D;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        /* Sección de beneficios */
+        .benefits-section {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin-bottom: 60px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .benefit-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #B4E9B7 0%, #63BA68 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .benefit-content h4 {
+            color: #296A2D;
+            font-size: 1.2em;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .benefit-content p {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .footer {
+            background: linear-gradient(135deg, #296A2D 0%, #1f5323 100%);
+            color: white;
+            padding: 50px 30px 30px;
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            color: #B4E9B7;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .footer-section p,
+        .footer-section ul {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95em;
+            line-height: 1.8;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section ul li:hover {
+            color: #B4E9B7;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 30px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2.2em;
+            }
+
+            .stats-row {
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            .menu-container {
+                flex-wrap: wrap;
+            }
+
+            .menu-btn {
+                flex: 1 1 45%;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .top-nav-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navegación superior -->
+    <div class="top-nav">
+        <div class="top-nav-container">
+            <div class="logo-section">
+                <div class="logo-icon">👥</div>
+                <div class="logo-text">
+                    <h2>Nova Manager</h2>
+                    <p>InnovaGroup</p>
+                </div>
+            </div>
+            <div class="user-section">
+                <div class="user-info">
+                    <p>Administrador</p>
+                    <span>admin@empresa.com</span>
+                </div>
+                <div class="user-avatar">A</div>
+            </div>
+        </div>
+    </div>
+
+     <!-- Advertencia para no admins -->
+
+     {% if messages %}
+  <div id="nm-messages-container" aria-live="polite"
+       style="position:fixed;top:18px;right:18px;z-index:9999;">
+    {% for message in messages %}
+      <div class="nm-toast" role="alert" data-level="{{ message.level }}">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
+                    background:#fff;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.12);
+                    border-left:6px solid #f7b731; max-width:360px;">
+          <div style="font-weight:700;color:#333;">Aviso</div>
+          <div style="color:#333;flex:1;">{{ message }}</div>
+          <button class="nm-toast-close" aria-label="Cerrar"
+                  style="background:transparent;border:none;font-size:18px;cursor:pointer;color:#666">
+            &times;
+          </button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <script>
+    (function(){
+      const container = document.getElementById('nm-messages-container');
+      if(!container) return;
+      const toasts = container.querySelectorAll('.nm-toast');
+      toasts.forEach((t, idx) => {
+        const card = t.firstElementChild;
+        // Auto-dismiss after 4s
+        setTimeout(()=> card.remove(), 4000 + idx*200);
+        // close button
+        const btn = card.querySelector('.nm-toast-close');
+        btn && btn.addEventListener('click', ()=> card.remove());
+      });
+    })();
+  </script>
+{% endif %}
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>Sistema de Recursos Humanos</h1>
+            <p>Gestión integral y profesional del capital humano de tu empresa</p>
+            
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-number">500+</span>
+                    <span class="stat-label">Empleados Activos</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">98%</span>
+                    <span class="stat-label">Satisfacción</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">24/7</span>
+                    <span class="stat-label">Disponibilidad</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menú de navegación -->
+    <div class="menu-bar">
+        <div class="menu-container">
+            <button class="menu-btn" onclick="location.href='{% url 'Empleado' %}'">Empleado</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Asistencia' %}'">Asistencia</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Horarios' %}'">Horarios</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Reportes' %}'">Reportes</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Permisos' %}'">Permisos</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Contacto' %}'">Contacto</button>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <div class="section-header">
+            <h2>Módulos Principales</h2>
+            <p>Accede a todas las herramientas necesarias para gestionar eficientemente tu personal</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card" onclick="location.href='{% url 'Empleado' %}'">
+                <div class="feature-icon">👥</div>
+                <h3>Gestión de empleados</h3>
+                <p>Administra toda la información de tu personal de manera centralizada y segura</p>
+                <span class="feature-badge">Esencial</span>
+            </div>
+
+            <div class="feature-card" onclick="location.href='{% url 'Asistencia' %}'">
+                <div class="feature-icon">📋</div>
+                <h3>Control de asistencia</h3>
+                <p>Registra y monitorea la asistencia, puntualidad y cumplimiento horario</p>
+                <span class="feature-badge">Tiempo Real</span>
+            </div>
+
+            <div class="feature-card" onclick="location.href='{% url 'Horarios' %}'">
+                <div class="feature-icon">🕐</div>
+                <h3>Gestión de horarios</h3>
+                <p>Configura y asigna turnos y horarios de manera flexible y eficiente</p>
+                <span class="feature-badge">Flexible</span>
+            </div>
+
+            <div class="feature-card" onclick="location.href='{% url 'Reportes' %}'">
+                <div class="feature-icon">📊</div>
+                <h3>Reportes detallados</h3>
+                <p>Genera análisis completos y estadísticas sobre el desempeño del personal</p>
+                <span class="feature-badge">Analytics</span>
+            </div>
+
+            <div class="feature-card" onclick="location.href='{% url 'Contacto' %}'">
+                <div class="feature-icon">✉️</div>
+                <h3>Envio de correos</h3>
+                <p>Enviar correos usando plantillas rapidas a todo el personal, agilizando el proceso</p>
+                <span class="feature-badge">Premium</span>
+            </div>
+        </div>
+
+        <!-- Sección de beneficios -->
+        <div class="benefits-section">
+            <div class="section-header">
+                <h2>¿Por qué elegir nuestro sistema?</h2>
+                <p>Solución completa diseñada para optimizar la gestión de recursos humanos</p>
+            </div>
+
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <div class="benefit-icon">⚡</div>
+                    <div class="benefit-content">
+                        <h4>Eficiencia Máxima</h4>
+                        <p>Automatiza procesos y reduce el tiempo dedicado a tareas administrativas</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <div class="benefit-icon">🔒</div>
+                    <div class="benefit-content">
+                        <h4>Seguridad Garantizada</h4>
+                        <p>Protección de datos con los más altos estándares de seguridad</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <div class="benefit-icon">📱</div>
+                    <div class="benefit-content">
+                        <h4>Acceso Multiplataforma</h4>
+                        <p>Disponible desde cualquier dispositivo, en cualquier momento</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <div class="benefit-icon">💡</div>
+                    <div class="benefit-content">
+                        <h4>Interfaz Intuitiva</h4>
+                        <p>Diseño moderno y fácil de usar que no requiere capacitación extensa</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <div class="benefit-icon">🎯</div>
+                    <div class="benefit-content">
+                        <h4>Reportes Personalizados</h4>
+                        <p>Crea informes adaptados a las necesidades específicas de tu empresa</p>
+                    </div>
+                </div>
+
+                <div class="benefit-item">
+                    <div class="benefit-icon">🤝</div>
+                    <div class="benefit-content">
+                        <h4>Soporte Dedicado</h4>
+                        <p>Equipo de soporte disponible para resolver cualquier duda o problema</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Sobre Nosotros</h3>
+                <p>Sistema profesional de gestión de recursos humanos diseñado para empresas modernas que buscan eficiencia y resultados.</p>
+            </div>
+
+            <div class="footer-section">
+                <h3>Enlaces Rápidos</h3>
+                <ul>
+                    <li>Documentación</li>
+                    <li>Preguntas Frecuentes</li>
+                    <li>Tutoriales</li>
+                    <li>Soporte Técnico</li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Contacto</h3>
+                <ul>
+                    <li>📧 contacto@hrsystem.com</li>
+                    <li>📞 +52 (664) 123-4567</li>
+                    <li>📍 Tijuana, Baja California</li>
+                    <li>🕐 Lun - Vie: 9:00 - 18:00</li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Legal</h3>
+                <ul>
+                    <li>Términos y Condiciones</li>
+                    <li>Política de Privacidad</li>
+                    <li>Aviso Legal</li>
+                    <li>Cookies</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 HR System - Sistema de Recursos Humanos. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

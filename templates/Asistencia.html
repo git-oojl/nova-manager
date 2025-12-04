@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Asistencia - Nova Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #B4E9B7 0%, #a8e3ab 100%);
+            min-height: 100vh;
+        }
+
+        /* Barra superior */
+        .top-nav {
+            background-color: #fff;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #296A2D 0%, #63BA68 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(41, 106, 45, 0.3);
+        }
+
+        .logo-text h2 {
+            color: #296A2D;
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .breadcrumb a {
+            color: #296A2D;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumb span {
+            color: #999;
+        }
+
+        /* Menú de navegación */
+        .menu-bar {
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .menu-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 0;
+        }
+
+        .menu-btn {
+            background-color: transparent;
+            color: #333;
+            border: none;
+            padding: 18px 35px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .menu-btn.active {
+            color: #296A2D;
+            background-color: rgba(180, 233, 183, 0.2);
+        }
+
+        .menu-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #296A2D, #63BA68);
+        }
+
+        .menu-btn:hover {
+            color: #296A2D;
+            background-color: rgba(180, 233, 183, 0.1);
+        }
+
+        /* Contenido principal */
+        .main-content {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 30px;
+        }
+
+        .page-header {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            color: #296A2D;
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 1.05em;
+        }
+
+        /* Estadísticas */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #B4E9B7 0%, #63BA68 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .stat-content h3 {
+            color: #296A2D;
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .stat-content p {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        /* Sección de búsqueda */
+        .search-section {
+            background: white;
+            border-radius: 15px;
+            padding: 35px 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 3px solid #63BA68;
+        }
+
+        .search-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .search-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #63BA68 0%, #296A2D 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .search-title {
+            color: #296A2D;
+            font-size: 1.4em;
+            font-weight: 700;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .search-input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-input-group label {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .search-input-group input {
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            font-size: 1em;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .search-input-group input:focus {
+            outline: none;
+            border-color: #63BA68;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(99, 186, 104, 0.1);
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #296A2D 0%, #1f5323 100%);
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(41, 106, 45, 0.4);
+        }
+
+        /* Sección de registros */
+        .records-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .records-title {
+            color: #296A2D;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            background: white;
+            color: #666;
+            border: 2px solid #e0e0e0;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: linear-gradient(135deg, #63BA68 0%, #296A2D 100%);
+            color: white;
+            border-color: #296A2D;
+        }
+
+        .records-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 25px;
+        }
+
+        .record-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #63BA68;
+        }
+
+        .record-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .record-card.entrada {
+            border-left-color: #4caf50;
+        }
+
+        .record-card.salida {
+            border-left-color: #ff9800;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f5f5f5;
+            border: none;
+            font-size: 22px;
+            color: #999;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .record-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .record-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #B4E9B7 0%, #63BA68 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .record-title {
+            color: #296A2D;
+            font-size: 1.4em;
+            font-weight: 700;
+        }
+
+        .record-info {
+            margin-bottom: 20px;
+        }
+
+        .record-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .record-info-label {
+            color: #666;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .record-info-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .record-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #63BA68 0%, #4fa157 100%);
+            color: white;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 186, 104, 0.4);
+        }
+
+        .btn-update {
+            background: linear-gradient(135deg, #296A2D 0%, #1f5323 100%);
+            color: white;
+        }
+
+        .btn-update:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(41, 106, 45, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            color: #296A2D;
+            font-size: 1.6em;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #666;
+            font-size: 1.05em;
+        }
+
+        @media (max-width: 768px) {
+            .records-section {
+                grid-template-columns: 1fr;
+            }
+
+            .menu-container {
+                flex-wrap: wrap;
+            }
+
+            .menu-btn {
+                flex: 1;
+                min-width: 100px;
+                padding: 15px 20px;
+            }
+
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                padding: 20px;
+            }
+
+            .search-section {
+                padding: 25px 20px;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script>
+        function buscarEmpleado() {
+            const nombre = document.getElementById("nombre-completo").value.trim();
+            
+            if (nombre === "") {
+                alert("⚠️ Por favor ingresa un nombre para buscar.");
+                return;
+            }
+            
+            alert(`🔍 Buscando registros de asistencia para: ${nombre}`);
+            
+            // Mostrar las tarjetas de ejemplo
+            document.querySelectorAll('.record-card').forEach(card => {
+                card.style.display = 'block';
+            });
+            
+            // Ocultar estado vacío si existe
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+        }
+
+        function cerrarTarjeta(elemento) {
+            elemento.closest('.record-card').style.display = 'none';
+        }
+
+        function guardarRegistro(tipo) {
+            alert(`💾 Registro de ${tipo} guardado exitosamente`);
+        }
+
+        function actualizarRegistro(tipo) {
+            alert(`📝 Registro de ${tipo} actualizado exitosamente`);
+        }
+
+        function filtrarRegistros(tipo) {
+            // Remover clase active de todos los botones
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Agregar clase active al botón clickeado
+            event.target.classList.add('active');
+            
+            const cards = document.querySelectorAll('.record-card');
+            
+            if (tipo === 'todos') {
+                cards.forEach(card => card.style.display = 'block');
+            } else {
+                cards.forEach(card => {
+                    if (card.classList.contains(tipo)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        // Permitir buscar con Enter
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('nombre-completo');
+            if (input) {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        buscarEmpleado();
+                    }
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <!-- Barra superior -->
+    <div class="top-nav">
+        <div class="top-nav-container">
+            <div class="logo-section">
+                <div class="logo-icon">📋</div>
+                <div class="logo-text">
+                    <h2>Nova Manager</h2>
+                    <p>Control de Asistencia</p>
+                </div>
+            </div>
+            <div class="breadcrumb">
+                <a href="{% url 'Menu' %}">Inicio</a>
+                <span>›</span>
+                <span>Asistencia</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menú de navegación -->
+    <div class="menu-bar">
+        <div class="menu-container">
+            <button class="menu-btn" onclick="location.href='{% url 'Empleado' %}'">Empleado</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Asistencia' %}'">Asistencia</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Horarios' %}'">Horarios</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Reportes' %}'">Reportes</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Permisos' %}'">Permisos</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Contacto' %}'">Contacto</button>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <!-- Header de página -->
+        <div class="page-header">
+            <h1>Control de Asistencia</h1>
+            <p>Monitorea y gestiona las entradas y salidas del personal en tiempo real</p>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <h3>98.5%</h3>
+                    <p>Asistencia Hoy</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🕐</div>
+                <div class="stat-content">
+                    <h3>337</h3>
+                    <p>Entradas Registradas</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏰</div>
+                <div class="stat-content">
+                    <h3>12</h3>
+                    <p>Retardos Hoy</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de búsqueda -->
+        <div class="search-section">
+            <div class="search-header">
+                <div class="search-icon">🔍</div>
+                <h2 class="search-title">Buscar Registros de Asistencia</h2>
+            </div>
+            <form class="search-form" onsubmit="event.preventDefault(); buscarEmpleado();">
+                <div class="search-input-group">
+                    <label for="nombre-completo">Nombre completo del empleado</label>
+                    <input type="text" id="nombre-completo" name="nombre-completo" placeholder="Ingresa el nombre completo del empleado">
+                </div>
+                <button type="submit" class="search-btn">Buscar</button>
+            </form>
+        </div>
+
+        <!-- Filtros de registros -->
+        <div class="records-header">
+            <h3 class="records-title">Registros de Asistencia</h3>
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filtrarRegistros('todos')">Todos</button>
+                <button class="filter-btn" onclick="filtrarRegistros('entrada')">Entradas</button>
+                <button class="filter-btn" onclick="filtrarRegistros('salida')">Salidas</button>
+            </div>
+        </div>
+
+        <!-- Registros -->
+        <div class="records-section">
+            <div class="record-card entrada">
+                <button class="close-btn" onclick="cerrarTarjeta(this)">×</button>
+                <div class="record-header">
+                    <div class="record-icon">🔵</div>
+                    <h3 class="record-title">Entrada</h3>
+                </div>
+                <div class="record-info">
+                    <div class="record-info-item">
+                        <span class="record-info-label">Empleado:</span>
+                        <span class="record-info-value">María José Martínez Lomelí</span>
+                    </div>
+                    <div class="record-info-item">
+                        <span class="record-info-label">Fecha:</span>
+                        <span class="record-info-value">31/10/2025</span>
+                    </div>
+                    <div class="record-info-item">
+                        <span class="record-info-label">Hora:</span>
+                        <span class="record-info-value">10:00 AM</span>
+                    </div>
+                </div>
+                <div class="record-buttons">
+                    <button class="btn btn-save" onclick="guardarRegistro('entrada')">
+                        <span>💾</span> Guardar
+                    </button>
+                    <button class="btn btn-update" onclick="actualizarRegistro('entrada')">
+                        <span>📝</span> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="record-card salida">
+                <button class="close-btn" onclick="cerrarTarjeta(this)">×</button>
+                <div class="record-header">
+                    <div class="record-icon">🟠</div>
+                    <h3 class="record-title">Salida</h3>
+                </div>
+                <div class="record-info">
+                    <div class="record-info-item">
+                        <span class="record-info-label">Empleado:</span>
+                        <span class="record-info-value">María José Martínez Lomelí</span>
+                    </div>
+                    <div class="record-info-item">
+                        <span class="record-info-label">Fecha:</span>
+                        <span class="record-info-value">31/10/2025</span>
+                    </div>
+                    <div class="record-info-item">
+                        <span class="record-info-label">Hora:</span>
+                        <span class="record-info-value">17:00 PM</span>
+                    </div>
+                </div>
+                <div class="record-buttons">
+                    <button class="btn btn-save" onclick="guardarRegistro('salida')">
+                        <span>💾</span> Guardar
+                    </button>
+                    <button class="btn btn-update" onclick="actualizarRegistro('salida')">
+                        <span>📝</span> Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

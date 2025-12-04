@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar sesión - Nova Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #B4E9B7 0%, #63BA68 100%);
+        }
+        .login-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: #2E7D32;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+        h1 {
+            font-size: 1.4rem;
+            color: #1B5E20;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        p.subtitle {
+            font-size: 0.9rem;
+            color: #4F4F4F;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        form label {
+            display: block;
+            font-size: 0.85rem;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        form input[type="text"],
+        form input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #BDBDBD;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        button {
+            width: 100%;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 999px;
+            background: #2E7D32;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        button:hover {
+            background: #256427;
+        }
+        .helptext, .errorlist {
+            font-size: 0.8rem;
+            color: #c62828;
+            margin-bottom: 10px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #757575;
+        }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <div class="logo">
+        <div class="logo-icon">NM</div>
+        <div>
+            <strong>Nova Manager</strong><br>
+            <span style="font-size: 0.8rem; color:#555;">Sistema de Recursos Humanos</span>
+        </div>
+    </div>
+
+    <h1>Iniciar sesión</h1>
+    <p class="subtitle">Accede al panel de control de Recursos Humanos</p>
+
+    {% if form.errors %}
+        <ul class="errorlist">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <label for="{{ form.username.id_for_label }}">Usuario</label>
+        {{ form.username }}
+
+        <label for="{{ form.password.id_for_label }}">Contraseña</label>
+        {{ form.password }}
+
+        <button type="submit">Entrar</button>
+
+        <input type="hidden" name="next" value="{{ next }}">
+    </form>
+
+    <div class="footer">
+        ¿No tienes cuenta?
+    <a href="{% url 'signup_employee' %}" style="color:#1B5E20;font-weight:600;text-decoration:none;">
+        Crear cuenta de empleado
+    </a>
+</div>
+</div>
+</body>
+</html>

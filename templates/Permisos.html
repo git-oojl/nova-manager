@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Permisos - Nova Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #B4E9B7 0%, #a8e3ab 100%);
+            min-height: 100vh;
+        }
+
+        /* Barra superior */
+        .top-nav {
+            background-color: #fff;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #296A2D 0%, #63BA68 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(41, 106, 45, 0.3);
+        }
+
+        .logo-text h2 {
+            color: #296A2D;
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .breadcrumb a {
+            color: #296A2D;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumb span {
+            color: #999;
+        }
+
+        /* Menú de navegación */
+        .menu-bar {
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .menu-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 0;
+        }
+
+        .menu-btn {
+            background-color: transparent;
+            color: #333;
+            border: none;
+            padding: 18px 35px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .menu-btn.active {
+            color: #296A2D;
+            background-color: rgba(180, 233, 183, 0.2);
+        }
+
+        .menu-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #296A2D, #63BA68);
+        }
+
+        .menu-btn:hover {
+            color: #296A2D;
+            background-color: rgba(180, 233, 183, 0.1);
+        }
+
+        /* Contenido principal */
+        .main-content {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 30px;
+        }
+
+        .page-header {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            color: #296A2D;
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            color: #666;
+            font-size: 1.05em;
+        }
+
+        /* Estadísticas */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #B4E9B7 0%, #63BA68 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .stat-content h3 {
+            color: #296A2D;
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .stat-content p {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        /* Layout de dos columnas */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+        }
+
+        /* Formulario de solicitud */
+        .form-container {
+            background: white;
+            padding: 35px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            height: fit-content;
+        }
+
+        .form-header {
+            border-bottom: 3px solid #B4E9B7;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-header h2 {
+            color: #296A2D;
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .required-indicator {
+            color: #e74c3c;
+            margin-left: 3px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.95em;
+            color: #333;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #63BA68;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(99, 186, 104, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #296A2D 0%, #1f5323 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(41, 106, 45, 0.4);
+        }
+
+        /* Lista de permisos */
+        .permissions-list {
+            background: white;
+            padding: 35px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #B4E9B7;
+        }
+
+        .list-title {
+            color: #296A2D;
+            font-size: 1.6em;
+            font-weight: 700;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-tab {
+            padding: 8px 18px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .filter-tab.active,
+        .filter-tab:hover {
+            background: linear-gradient(135deg, #63BA68 0%, #296A2D 100%);
+            color: white;
+            border-color: #296A2D;
+        }
+
+        .permission-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 5px solid #63BA68;
+            transition: all 0.3s ease;
+        }
+
+        .permission-card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        .permission-card.pendiente {
+            border-left-color: #ffa726;
+        }
+
+        .permission-card.aprobado {
+            border-left-color: #4caf50;
+        }
+
+        .permission-card.rechazado {
+            border-left-color: #e74c3c;
+        }
+
+        .permission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .permission-info h4 {
+            color: #296A2D;
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .permission-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .permission-status {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .permission-status.pendiente {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .permission-status.aprobado {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .permission-status.rechazado {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .permission-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            color: #666;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            color: #333;
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        .permission-description {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            color: #555;
+            font-size: 0.9em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .permission-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .btn-reject:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #63BA68 0%, #4fa157 100%);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 186, 104, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            color: #666;
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .permission-details {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .menu-container {
+                flex-wrap: wrap;
+            }
+
+            .menu-btn {
+                flex: 1;
+                min-width: 100px;
+                padding: 15px 20px;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                padding: 20px;
+            }
+
+            .form-container,
+            .permissions-list {
+                padding: 25px;
+            }
+
+            .list-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .filter-tabs {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .permission-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <script>
+        function solicitarPermiso(event) {
+            event.preventDefault();
+            
+            const empleadoId = document.getElementById('empleado-id').value.trim();
+            const tipoPermiso = document.getElementById('tipo-permiso').value;
+            const fechaInicio = document.getElementById('fecha-inicio').value;
+            const fechaFin = document.getElementById('fecha-fin').value;
+            const motivo = document.getElementById('motivo').value.trim();
+            
+            if (!empleadoId || !tipoPermiso || !fechaInicio || !fechaFin || !motivo) {
+                alert('⚠️ Por favor completa todos los campos obligatorios.');
+                return false;
+            }
+            
+            alert('✅ Solicitud de permiso enviada exitosamente.\n\nEstará pendiente de aprobación.');
+            document.getElementById('permisoForm').reset();
+            return false;
+        }
+
+        function filtrarPermisos(estado) {
+            // Remover clase active de todos los tabs
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Agregar clase active al tab clickeado
+            event.target.classList.add('active');
+            
+            const cards = document.querySelectorAll('.permission-card');
+            
+            if (estado === 'todos') {
+                cards.forEach(card => card.style.display = 'block');
+            } else {
+                cards.forEach(card => {
+                    if (card.classList.contains(estado)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        function aprobarPermiso(id) {
+            if (confirm('¿Deseas aprobar este permiso?')) {
+                alert('✅ Permiso aprobado exitosamente');
+            }
+        }
+
+        function rechazarPermiso(id) {
+            const motivo = prompt('Ingresa el motivo del rechazo:');
+            if (motivo) {
+                alert('❌ Permiso rechazado\nMotivo: ' + motivo);
+            }
+        }
+
+        function editarPermiso(id) {
+            alert('📝 Editar permiso #' + id);
+        }
+    </script>
+</head>
+<body>
+    <!-- Barra superior -->
+    <div class="top-nav">
+        <div class="top-nav-container">
+            <div class="logo-section">
+                <div class="logo-icon">📋</div>
+                <div class="logo-text">
+                    <h2>Nova Manager</h2>
+                    <p>Gestión de Permisos</p>
+                </div>
+            </div>
+            <div class="breadcrumb">
+                <a href="{% url 'Menu' %}">Inicio</a>
+                <span>›</span>
+                <span>Permisos</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menú de navegación -->
+    <div class="menu-bar">
+        <div class="menu-container">
+            <button class="menu-btn" onclick="location.href='{% url 'Empleado' %}'">Empleado</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Asistencia' %}'">Asistencia</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Horarios' %}'">Horarios</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Reportes' %}'">Reportes</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Permisos' %}'">Permisos</button>
+            <button class="menu-btn" onclick="location.href='{% url 'Contacto' %}'">Contacto</button>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <!-- Header de página -->
+        <div class="page-header">
+            <h1>Gestión de Permisos y Ausencias</h1>
+            <p>Administra solicitudes de permisos, vacaciones y ausencias del personal</p>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-content">
+                    <h3>24</h3>
+                    <p>Permisos Activos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-content">
+                    <h3>8</h3>
+                    <p>Pendientes de Aprobación</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <h3>156</h3>
+                    <p>Aprobados este Mes</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏖️</div>
+                <div class="stat-content">
+                    <h3>28</h3>
+                    <p>De Vacaciones Hoy</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de contenido -->
+        <div class="content-grid">
+            <!-- Formulario de solicitud -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Nueva Solicitud</h2>
+                    <p>Registra una nueva solicitud de permiso</p>
+                </div>
+
+                <form id="permisoForm" onsubmit="return solicitarPermiso(event)">
+                    <div class="form-group">
+                        <label for="empleado-id">
+                            ID del Empleado
+                            <span class="required-indicator">*</span>
+                        </label>
+                        <input type="text" id="empleado-id" name="empleado-id" placeholder="Ej: EMP001">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nombre-empleado">
+                            Nombre del Empleado
+                            <span class="required-indicator">*</span>
+                        </label>
+                        <input type="text" id="nombre-empleado" name="nombre-empleado" placeholder="Nombre completo">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tipo-permiso">
+                            Tipo de Permiso
+                            <span class="required-indicator">*</span>
+                        </label>
+                        <select id="tipo-permiso" name="tipo-permiso">
+                            <option value="">Seleccionar tipo...</option>
+                            <option value="vacaciones">🏖️ Vacaciones</option>
+                            <option value="personal">👤 Permiso Personal</option>
+                            <option value="medico">🏥 Permiso Médico</option>
+                            <option value="familiar">👨‍👩‍👧 Asunto Familiar</option>
+                            <option value="estudio">📚 Permiso de Estudio</option>
+                            <option value="maternidad">👶 Maternidad/Paternidad</option>
+                            <option value="otro">📋 Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha-inicio">
+                            Fecha de Inicio
+                            <span class="required-indicator">*</span>
+                        </label>
+                        <input type="date" id="fecha-inicio" name="fecha-inicio">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fecha-fin">
+                            Fecha de Fin
+                            <span class="required-indicator">*</span>
+                        </label>
+                        <input type="date" id="fecha-fin" name="fecha-fin">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="motivo">
+                            Motivo/Descripción
+                            <span class="required-indicator">*</span>
+                        </label>
+                        <textarea id="motivo" name="motivo" placeholder="Describe el motivo de la solicitud..."></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <span>📤</span> Enviar Solicitud
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lista de permisos -->
+            <div class="permissions-list">
+                <div class="list-header">
+                    <h2 class="list-title">Solicitudes Recientes</h2>
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" onclick="filtrarPermisos('todos')">Todos</button>
+                        <button class="filter-tab" onclick="filtrarPermisos('pendiente')">Pendientes</button>
+                        <button class="filter-tab" onclick="filtrarPermisos('aprobado')">Aprobados</button>
+                        <button class="filter-tab" onclick="filtrarPermisos('rechazado')">Rechazados</button>
+                    </div>
+                </div>
+
+                <!-- Permiso 1 - Pendiente -->
+                <div class="permission-card pendiente">
+                    <div class="permission-header">
+                        <div class="permission-info">
+                            <h4>María José Martínez</h4>
+                            <p>ID: EMP042 • Recursos Humanos</p>
+                        </div>
+                        <span class="permission-status pendiente">Pendiente</span>
+                    </div>
+                    <div class="permission-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Tipo de Permiso</span>
+                            <span class="detail-value">🏖️ Vacaciones</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Periodo</span>
+                            <span class="detail-value">20/11/2025 - 04/12/2025</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Duración</span>
+                            <span class="detail-value">15 días</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Fecha de Solicitud</span>
+                            <span class="detail-value">15/11/2025</span>
+                        </div>
+                    </div>
+                    <div class="permission-description">
+                        <strong>Motivo:</strong> Vacaciones programadas de fin de año para viaje familiar.
+                    </div>
+                    <div class="permission-actions">
+                        <button class="action-btn btn-approve" onclick="aprobarPermiso(1)">✅ Aprobar</button>
+                        <button class="action-btn btn-reject" onclick="rechazarPermiso(1)">❌ Rechazar</button>
+                        <button class="action-btn btn-edit" onclick="editarPermiso(1)">📝 Editar</button>
+                    </div>
+                </div>
+
+                <!-- Permiso 2 - Aprobado -->
+                <div class="permission-card aprobado">
+                    <div class="permission-header">
+                        <div class="permission-info">
+                            <h4>Carlos Hernández López</h4>
+                            <p>ID: EMP125 • Ventas</p>
+                        </div>
+                        <span class="permission-status aprobado">Aprobado</span>
+                    </div>
+                    <div class="permission-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Tipo de Permiso</span>
+                            <span class="detail-value">🏥 Permiso Médico</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Periodo</span>
+                            <span class="detail-value">18/11/2025 - 19/11/2025</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Duración</span>
+                            <span class="detail-value">2 días</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Aprobado por</span>
+                            <span class="detail-value">Ana García</span>
+                        </div>
+                    </div>
+                    <div class="permission-description">
+                        <strong>Motivo:</strong> Cita médica especializada y procedimiento ambulatorio.
+                    </div>
+                </div>
+
+                <!-- Permiso 3 - Rechazado -->
+                <div class="permission-card rechazado">
+                    <div class="permission-header">
+                        <div class="permission-info">
+                            <h4>Roberto Sánchez Torres</h4>
+                            <p>ID: EMP087 • Producción</p>
+                        </div>
+                        <span class="permission-status rechazado">Rechazado</span>
+                    </div>
+                    <div class="permission-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Tipo de Permiso</span>
+                            <span class="detail-value">👤 Permiso Personal</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Periodo</span>
+                            <span class="detail-value">25/11/2025 -

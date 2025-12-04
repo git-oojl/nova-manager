@@ -1,0 +1,108 @@
+<!-- templates/registration/signup.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Crear cuenta de empleado - Nova Manager</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        :root { --green:#2E7D32; --bg1:#B4E9B7; --bg2:#63BA68; }
+        *{box-sizing:border-box}
+        body{
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+            margin:0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            min-height:100vh;
+            padding:20px;
+        }
+        .card{
+            width:100%;
+            max-width:600px;
+            background:#fff;
+            border-radius:14px;
+            padding:28px;
+            box-shadow:0 10px 30px rgba(0,0,0,.12);
+        }
+        h1{color:#1B5E20;margin:0 0 8px;font-size:1.35rem}
+        p.lead{color:#555;margin:0 0 18px}
+        label{display:block;font-size:0.88rem;color:#333;margin-bottom:6px}
+        input[type="text"], input[type="email"], input[type="password"]{
+            width:100%;
+            padding:10px 12px;
+            border-radius:8px;
+            border:1px solid #d0d0d0;
+            margin-bottom:12px;
+            font-size:0.95rem;
+        }
+        .row{display:flex;gap:12px}
+        .row > div{flex:1}
+        button.btn-primary{
+            display:block;width:100%;padding:12px;border-radius:999px;border:none;background:var(--green);
+            color:#fff;font-weight:700;font-size:1rem;cursor:pointer;margin-top:6px;
+        }
+        button.btn-primary:hover{opacity:.95}
+        .back-link{margin-top:14px;font-size:0.9rem;text-align:center;color:#444}
+        .back-link a{color:#1B5E20;font-weight:700;text-decoration:none}
+        .errorlist{color:#c62828;font-size:0.85rem;margin-bottom:10px;list-style:none;padding-left:0}
+    </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Crear cuenta de empleado</h1>
+    <p class="lead">Regístrate para acceder al sistema de Recursos Humanos.</p>
+
+    {% if form.errors %}
+      <ul class="errorlist">
+        {% for field in form %}
+          {% for error in field.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <label for="{{ form.username.id_for_label }}">Usuario</label>
+      {{ form.username }}
+
+      <div class="row" style="margin-bottom:6px;">
+        <div>
+          <label for="{{ form.first_name.id_for_label }}">Nombre</label>
+          {{ form.first_name }}
+        </div>
+        <div>
+          <label for="{{ form.last_name.id_for_label }}">Apellidos</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <label for="{{ form.email.id_for_label }}">Correo electrónico</label>
+      {{ form.email }}
+
+      <label for="{{ form.telefono.id_for_label }}">Teléfono</label>
+      {{ form.telefono }}
+
+      <label for="{{ form.password1.id_for_label }}">Contraseña</label>
+      {{ form.password1 }}
+
+      <label for="{{ form.password2.id_for_label }}">Confirmar contraseña</label>
+      {{ form.password2 }}
+
+      <button type="submit" class="btn-primary">Crear cuenta</button>
+    </form>
+
+    <div class="back-link">
+      ¿Ya tienes cuenta?
+      <a href="{% url 'login' %}">Inicia sesión</a>
+    </div>
+  </div>
+</body>
+</html>
