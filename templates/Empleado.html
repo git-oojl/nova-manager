@@ -484,16 +484,40 @@
         }
 
         function limpiarFormulario() {
-            if (confirm("¿Deseas limpiar todos los campos del formulario?")) {
-                const form = document.getElementById("empleadoForm");
-                if (form) {
-                    form.reset();
-                }
-                const hiddenPk = document.getElementById("empleado_pk");
-                const actionInput = document.getElementById("form-action");
-                if (hiddenPk) hiddenPk.value = "";
-                if (actionInput) actionInput.value = "";
+            if (!confirm("¿Deseas limpiar todos los campos del formulario?")) {
+                return;
             }
+            const camposTexto = ["id", "nombre", "puesto"];
+            camposTexto.forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+            });
+
+            const dep = document.getElementById("departamento");
+            if (dep) dep.selectedIndex = 0;
+
+            const est = document.getElementById("estatus");
+            if (est) est.selectedIndex = 0;
+
+            const hiddenPk = document.getElementById("empleado_pk");
+            if (hiddenPk) hiddenPk.value = "";
+
+            const actionInput = document.getElementById("form-action");
+            if (actionInput) actionInput.value = "";
+        }
+
+        // NEW: send admin to signup page, optionally with the "Nombre completo" prefilled
+        function irARegistroEmpleado() {
+            const nombreInput = document.getElementById("nombre");
+            const nombre = nombreInput ? nombreInput.value.trim() : "";
+            let url = "{% url 'signup_employee' %}";
+
+            if (nombre) {
+                const params = new URLSearchParams();
+                params.set("nombre", nombre);
+                url = url + "?" + params.toString();
+            }
+            window.location.href = url;
         }
     </script>
 
@@ -569,13 +593,11 @@
         <button type="button" class="action-btn-quick" onclick="limpiarFormulario()">
             <span>📝</span> Nuevo Registro
         </button>
-        <button type="button" class="action-btn-quick" onclick="enviarAccion('buscar')">
-            <span>🔍</span> Búsqueda rápida
-        </button>
         <button type="button" class="action-btn-quick" onclick="location.href='{% url 'Reportes' %}'">
             <span>📄</span> Generar Reporte
         </button>
-        <button type="button" class="action-btn-quick" onclick="window.location.href='{% url 'Empleado' %}?export=json'">
+        <button type="button" class="action-btn-quick"
+                onclick="window.location.href='{% url 'Empleado' %}?export=json'">
             <span>💾</span> Exportar Datos
         </button>
     </div>
