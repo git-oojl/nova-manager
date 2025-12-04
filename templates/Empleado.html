@@ -572,29 +572,29 @@
         </div>
 
         <!-- Estadísticas rápidas -->
-        <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <div class="stat-content">
-                    <h3>342</h3>
-                    <p>Total Empleados</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">✅</div>
-                <div class="stat-content">
-                    <h3>325</h3>
-                    <p>Activos</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">📊</div>
-                <div class="stat-content">
-                    <h3>8</h3>
-                    <p>Departamentos</p>
-                </div>
-            </div>
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+            <h3>{{ total_empleados }}</h3>
+            <p>Total Empleados</p>
         </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+            <h3>{{ empleados_activos }}</h3>
+            <p>Activos</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+            <h3>{{ departamentos_count }}</h3>
+            <p>Departamentos</p>
+        </div>
+    </div>
+</div>
 
         <!-- Acciones rápidas -->
         <div class="quick-actions">
@@ -709,7 +709,57 @@
                     </button>
                 </div>
             </form>
+            </form>
         </div>
-    </div>
+
+        <!-- Lista de empleados (datos reales) -->
+        <div class="form-container" style="margin-top: 30px;">
+            <div class="form-header">
+                <h2>Empleados registrados</h2>
+                <p>Resumen de los empleados en el sistema</p>
+            </div>
+
+            {% if empleados %}
+                <div style="overflow-x:auto; margin-top: 10px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.92em;">
+                        <thead>
+                            <tr style="background:#f3f8f3;">
+                                <th style="text-align:left; padding:8px;">ID</th>
+                                <th style="text-align:left; padding:8px;">Nombre</th>
+                                <th style="text-align:left; padding:8px;">Correo</th>
+                                <th style="text-align:left; padding:8px;">Teléfono</th>
+                                <th style="text-align:left; padding:8px;">Puesto</th>
+                                <th style="text-align:left; padding:8px;">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in empleados %}
+                                <tr style="border-top:1px solid #e0e0e0;">
+                                    <td style="padding:8px;">{{ emp.id }}</td>
+                                    <td style="padding:8px;">
+                                        {{ emp.nombre }} {{ emp.apellido }}
+                                    </td>
+                                    <td style="padding:8px;">{{ emp.email }}</td>
+                                    <td style="padding:8px;">{{ emp.telefono }}</td>
+                                    <td style="padding:8px;">{{ emp.puesto|default:"—" }}</td>
+                                    <td style="padding:8px;">
+                                        {% if emp.estado %}
+                                            <span style="color:#1b5e20; font-weight:600;">Activo</span>
+                                        {% else %}
+                                            <span style="color:#c0392b; font-weight:600;">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p style="margin-top:10px; color:#555;">
+                    No hay empleados registrados todavía.
+                </p>
+            {% endif %}
+        </div>
+    </div> <!-- .main-content -->
 </body>
 </html>

@@ -7,9 +7,10 @@ from django.contrib import messages
 from django.contrib.auth import login
 from .forms import ContactForm, EmployeeSignUpForm
 
-# admin_core_RH/views.py
 from django.contrib.auth.decorators import login_required
 from .decorators import admin_required
+
+from .models import Empleado as EmpleadoModel
 
 # Create your views here.
 # Anyone logged in can see Menu
@@ -25,7 +26,26 @@ def Dashboard(request):
 @login_required
 @admin_required(redirect_to='Menu')
 def Empleado(request):
-    return render(request, 'Empleado.html')
+    # Get all employees
+    empleados_qs = EmpleadoModel.objects.select_related("usuario").all().order_by("nombre", "apellido")
+
+    total_empleados = empleados_qs.count()
+    empleados_activos = empleados_qs.filter(estado=True).count()
+    # For now we approximate "departments" with distinct 'puesto'
+    departamentos_count = (
+        empleados_qs.exclude(puesto="")
+        .values_list("puesto", flat=True)
+        .distinct()
+        .count()
+    )
+
+    context = {
+        "empleados": empleados_qs,
+        "total_empleados": total_empleados,
+        "empleados_activos": empleados_activos,
+        "departamentos_count": departamentos_count,
+    }
+    return render(request, "Empleado.html", context)
 
 @login_required
 def Asistencia(request):
