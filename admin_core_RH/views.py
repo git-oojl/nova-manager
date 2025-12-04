@@ -189,12 +189,31 @@ def signup_employee(request):
         form = EmployeeSignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Log the new employee in immediately
-            login(request, user)
-            messages.success(request, "Cuenta de empleado creada correctamente. ¡Bienvenido a Nova Manager!")
-            return redirect('Menu')
+
+            # Is the creator an admin (using the Empleado page)?
+            is_admin_creator = (
+                request.user.is_authenticated
+                and (request.user.is_staff or request.user.is_superuser)
+            )
+
+            if is_admin_creator:
+                # Keep the admin logged in, just create the employee
+                messages.success(
+                    request,
+                    f"Empleado '{user.get_full_name() or user.username}' creado correctamente. "
+                    "Ahora puedes completar su información en el módulo Empleado."
+                )
+                return redirect("Empleado")
+            else:
+                # Normal self-registration: log in the new employee
+                login(request, user)
+                messages.success(
+                    request,
+                    "Cuenta de empleado creada correctamente. ¡Bienvenido a Nova Manager!"
+                )
+                return redirect("Menu")
     else:
-        # If coming from the Empleado page, we may have ?nombre=Nombre Apellido
+        # Prefill from GET ?nombre=...
         initial = {}
         full_name = (request.GET.get("nombre") or "").strip()
         if full_name:
