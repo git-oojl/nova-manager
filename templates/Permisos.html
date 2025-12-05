@@ -576,67 +576,44 @@
             }
         }
     </style>
-    <script>
-        function solicitarPermiso(event) {
-            event.preventDefault();
-            
-            const empleadoId = document.getElementById('empleado-id').value.trim();
-            const tipoPermiso = document.getElementById('tipo-permiso').value;
-            const fechaInicio = document.getElementById('fecha-inicio').value;
-            const fechaFin = document.getElementById('fecha-fin').value;
-            const motivo = document.getElementById('motivo').value.trim();
-            
-            if (!empleadoId || !tipoPermiso || !fechaInicio || !fechaFin || !motivo) {
-                alert('⚠️ Por favor completa todos los campos obligatorios.');
-                return false;
-            }
-            
-            alert('✅ Solicitud de permiso enviada exitosamente.\n\nEstará pendiente de aprobación.');
-            document.getElementById('permisoForm').reset();
-            return false;
+<script>
+    function buscarEmpleadoPermiso() {
+        const empleadoId = document.getElementById('empleado-id').value.trim();
+        if (!empleadoId) return;
+        const params = new URLSearchParams(window.location.search);
+        params.set('empleado_id', empleadoId);
+        window.location.search = params.toString();
+    }
+
+    function filtrarPermisos(estado) {
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        if (window.event && window.event.target) {
+            window.event.target.classList.add('active');
         }
 
-        function filtrarPermisos(estado) {
-            // Remover clase active de todos los tabs
-            document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.classList.remove('active');
+        const cards = document.querySelectorAll('.permission-card');
+
+        if (estado === 'todos') {
+            cards.forEach(card => card.style.display = 'block');
+        } else {
+            cards.forEach(card => {
+                if (card.classList.contains(estado)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
             });
-            
-            // Agregar clase active al tab clickeado
-            event.target.classList.add('active');
-            
-            const cards = document.querySelectorAll('.permission-card');
-            
-            if (estado === 'todos') {
-                cards.forEach(card => card.style.display = 'block');
-            } else {
-                cards.forEach(card => {
-                    if (card.classList.contains(estado)) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            }
         }
+    }
 
-        function aprobarPermiso(id) {
-            if (confirm('¿Deseas aprobar este permiso?')) {
-                alert('✅ Permiso aprobado exitosamente');
-            }
-        }
-
-        function rechazarPermiso(id) {
-            const motivo = prompt('Ingresa el motivo del rechazo:');
-            if (motivo) {
-                alert('❌ Permiso rechazado\nMotivo: ' + motivo);
-            }
-        }
-
-        function editarPermiso(id) {
-            alert('📝 Editar permiso #' + id);
-        }
-    </script>
+    function limpiarPermisoForm() {
+        const form = document.getElementById('permisoForm');
+        if (form) form.reset();
+    }
+</script>
 </head>
 <body>
     <!-- Barra superior -->
@@ -682,28 +659,28 @@
             <div class="stat-card">
                 <div class="stat-icon">📋</div>
                 <div class="stat-content">
-                    <h3>24</h3>
+                    <h3>{{ permisos_activos }}</h3>
                     <p>Permisos Activos</p>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">⏳</div>
                 <div class="stat-content">
-                    <h3>8</h3>
+                    <<h3>{{ permisos_pendientes }}</h3>
                     <p>Pendientes de Aprobación</p>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">✅</div>
                 <div class="stat-content">
-                    <h3>156</h3>
+                    <h3>{{ permisos_aprobados_mes }}</h3>
                     <p>Aprobados este Mes</p>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">🏖️</div>
                 <div class="stat-content">
-                    <h3>28</h3>
+                    <h3>{{ vacaciones_hoy }}</h3>
                     <p>De Vacaciones Hoy</p>
                 </div>
             </div>
@@ -712,171 +689,170 @@
         <!-- Grid de contenido -->
         <div class="content-grid">
             <!-- Formulario de solicitud -->
-            <div class="form-container">
-                <div class="form-header">
-                    <h2>Nueva Solicitud</h2>
-                    <p>Registra una nueva solicitud de permiso</p>
+<div class="form-container">
+    <div class="form-header">
+        <h2>Nueva Solicitud</h2>
+        <p>Registra una nueva solicitud de permiso</p>
+    </div>
+
+    {% if mensaje %}
+        <p style="margin-bottom:10px;color:#1b7f3b;font-weight:600;">{{ mensaje }}</p>
+    {% endif %}
+    {% if error %}
+        <p style="margin-bottom:10px;color:#b3261e;font-weight:600;">{{ error }}</p>
+    {% endif %}
+
+    <form id="permisoForm" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="{% if permiso_edit %}actualizar{% else %}crear{% endif %}">
+        {% if permiso_edit %}
+            <input type="hidden" name="permiso_id" value="{{ permiso_edit.id }}">
+        {% endif %}
+
+        <div class="form-group">
+            <label for="empleado-id">
+                ID del Empleado
+                <span class="required-indicator">*</span>
+            </label>
+            <input type="text" id="empleado-id" name="empleado-id"
+                   placeholder="Ej: 1"
+                   value="{{ empleado_id_prefill }}"
+                   onblur="buscarEmpleadoPermiso()">
+        </div>
+
+        <div class="form-group">
+            <label for="nombre-empleado">
+                Nombre del Empleado
+                <span class="required-indicator">*</span>
+            </label>
+            <input type="text" id="nombre-empleado" name="nombre-empleado"
+                   placeholder="Nombre completo"
+                   value="{{ empleado_nombre_prefill }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="tipo-permiso">
+                Tipo de Permiso
+                <span class="required-indicator">*</span>
+            </label>
+            <select id="tipo-permiso" name="tipo-permiso">
+                <option value="">Seleccionar tipo...</option>
+                <option value="vacaciones" {% if tipo_permiso_prefill == "vacaciones" %}selected{% endif %}>🏖️ Vacaciones</option>
+                <option value="personal" {% if tipo_permiso_prefill == "personal" %}selected{% endif %}>👤 Permiso Personal</option>
+                <option value="medico" {% if tipo_permiso_prefill == "medico" %}selected{% endif %}>🏥 Permiso Médico</option>
+                <option value="familiar" {% if tipo_permiso_prefill == "familiar" %}selected{% endif %}>👨‍👩‍👧 Asunto Familiar</option>
+                <option value="estudio" {% if tipo_permiso_prefill == "estudio" %}selected{% endif %}>📚 Permiso de Estudio</option>
+                <option value="maternidad" {% if tipo_permiso_prefill == "maternidad" %}selected{% endif %}>👶 Maternidad/Paternidad</option>
+                <option value="otro" {% if tipo_permiso_prefill == "otro" %}selected{% endif %}>📋 Otro</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="fecha-inicio">
+                Fecha de Inicio
+                <span class="required-indicator">*</span>
+            </label>
+            <input type="date" id="fecha-inicio" name="fecha-inicio"
+                   value="{{ fecha_inicio_prefill }}">
+        </div>
+
+        <div class="form-group">
+            <label for="fecha-fin">
+                Fecha de Fin
+                <span class="required-indicator">*</span>
+            </label>
+            <input type="date" id="fecha-fin" name="fecha-fin"
+                   value="{{ fecha_fin_prefill }}">
+        </div>
+
+        <div class="form-group">
+            <label for="motivo">
+                Motivo/Descripción
+                <span class="required-indicator">*</span>
+            </label>
+            <textarea id="motivo" name="motivo"
+                      placeholder="Describe el motivo de la solicitud...">{{ motivo_prefill }}</textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">
+            <span>📤</span> {% if permiso_edit %}Guardar cambios{% else %}Enviar Solicitud{% endif %}
+        </button>
+    </form>
+</div>
+
+<!-- Lista de permisos -->
+<div class="permissions-list">
+    <div class="list-header">
+        <h2 class="list-title">Solicitudes Recientes</h2>
+        <div class="filter-tabs">
+            <button class="filter-tab active" onclick="filtrarPermisos('todos')">Todos</button>
+            <button class="filter-tab" onclick="filtrarPermisos('pendiente')">Pendientes</button>
+            <button class="filter-tab" onclick="filtrarPermisos('aprobado')">Aprobados</button>
+            <button class="filter-tab" onclick="filtrarPermisos('rechazado')">Rechazados</button>
+        </div>
+    </div>
+
+    {% if permisos_recientes %}
+        {% for permiso in permisos_recientes %}
+            <div class="permission-card {{ permiso.estado }}">
+                <div class="permission-header">
+                    <div class="permission-info">
+                        <h4>{{ permiso.empleado.nombre }} {{ permiso.empleado.apellido }}</h4>
+                        <p>ID: {{ permiso.empleado.id }} • {{ permiso.empleado.puesto }}</p>
+                    </div>
+                    <span class="permission-status {{ permiso.estado }}">
+                        {{ permiso.get_estado_display }}
+                    </span>
                 </div>
-
-                <form id="permisoForm" onsubmit="return solicitarPermiso(event)">
-                    <div class="form-group">
-                        <label for="empleado-id">
-                            ID del Empleado
-                            <span class="required-indicator">*</span>
-                        </label>
-                        <input type="text" id="empleado-id" name="empleado-id" placeholder="Ej: EMP001">
+                <div class="permission-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Tipo de Permiso</span>
+                        <span class="detail-value">{{ permiso.get_tipo_display }}</span>
                     </div>
-
-                    <div class="form-group">
-                        <label for="nombre-empleado">
-                            Nombre del Empleado
-                            <span class="required-indicator">*</span>
-                        </label>
-                        <input type="text" id="nombre-empleado" name="nombre-empleado" placeholder="Nombre completo">
+                    <div class="detail-item">
+                        <span class="detail-label">Periodo</span>
+                        <span class="detail-value">
+                            {{ permiso.fecha_inicio|date:"d/m/Y" }} - {{ permiso.fecha_fin|date:"d/m/Y" }}
+                        </span>
                     </div>
-
-                    <div class="form-group">
-                        <label for="tipo-permiso">
-                            Tipo de Permiso
-                            <span class="required-indicator">*</span>
-                        </label>
-                        <select id="tipo-permiso" name="tipo-permiso">
-                            <option value="">Seleccionar tipo...</option>
-                            <option value="vacaciones">🏖️ Vacaciones</option>
-                            <option value="personal">👤 Permiso Personal</option>
-                            <option value="medico">🏥 Permiso Médico</option>
-                            <option value="familiar">👨‍👩‍👧 Asunto Familiar</option>
-                            <option value="estudio">📚 Permiso de Estudio</option>
-                            <option value="maternidad">👶 Maternidad/Paternidad</option>
-                            <option value="otro">📋 Otro</option>
-                        </select>
+                    <div class="detail-item">
+                        <span class="detail-label">Duración</span>
+                        <span class="detail-value">{{ permiso.duracion_dias }} días</span>
                     </div>
-
-                    <div class="form-group">
-                        <label for="fecha-inicio">
-                            Fecha de Inicio
-                            <span class="required-indicator">*</span>
-                        </label>
-                        <input type="date" id="fecha-inicio" name="fecha-inicio">
+                    <div class="detail-item">
+                        <span class="detail-label">Fecha de Solicitud</span>
+                        <span class="detail-value">{{ permiso.fecha_solicitud|date:"d/m/Y" }}</span>
                     </div>
-
-                    <div class="form-group">
-                        <label for="fecha-fin">
-                            Fecha de Fin
-                            <span class="required-indicator">*</span>
-                        </label>
-                        <input type="date" id="fecha-fin" name="fecha-fin">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="motivo">
-                            Motivo/Descripción
-                            <span class="required-indicator">*</span>
-                        </label>
-                        <textarea id="motivo" name="motivo" placeholder="Describe el motivo de la solicitud..."></textarea>
-                    </div>
-
-                    <button type="submit" class="submit-btn">
-                        <span>📤</span> Enviar Solicitud
-                    </button>
-                </form>
-            </div>
-
-            <!-- Lista de permisos -->
-            <div class="permissions-list">
-                <div class="list-header">
-                    <h2 class="list-title">Solicitudes Recientes</h2>
-                    <div class="filter-tabs">
-                        <button class="filter-tab active" onclick="filtrarPermisos('todos')">Todos</button>
-                        <button class="filter-tab" onclick="filtrarPermisos('pendiente')">Pendientes</button>
-                        <button class="filter-tab" onclick="filtrarPermisos('aprobado')">Aprobados</button>
-                        <button class="filter-tab" onclick="filtrarPermisos('rechazado')">Rechazados</button>
-                    </div>
-                </div>
-
-                <!-- Permiso 1 - Pendiente -->
-                <div class="permission-card pendiente">
-                    <div class="permission-header">
-                        <div class="permission-info">
-                            <h4>María José Martínez</h4>
-                            <p>ID: EMP042 • Recursos Humanos</p>
-                        </div>
-                        <span class="permission-status pendiente">Pendiente</span>
-                    </div>
-                    <div class="permission-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Tipo de Permiso</span>
-                            <span class="detail-value">🏖️ Vacaciones</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Periodo</span>
-                            <span class="detail-value">20/11/2025 - 04/12/2025</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Duración</span>
-                            <span class="detail-value">15 días</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Fecha de Solicitud</span>
-                            <span class="detail-value">15/11/2025</span>
-                        </div>
-                    </div>
-                    <div class="permission-description">
-                        <strong>Motivo:</strong> Vacaciones programadas de fin de año para viaje familiar.
-                    </div>
-                    <div class="permission-actions">
-                        <button class="action-btn btn-approve" onclick="aprobarPermiso(1)">✅ Aprobar</button>
-                        <button class="action-btn btn-reject" onclick="rechazarPermiso(1)">❌ Rechazar</button>
-                        <button class="action-btn btn-edit" onclick="editarPermiso(1)">📝 Editar</button>
-                    </div>
-                </div>
-
-                <!-- Permiso 2 - Aprobado -->
-                <div class="permission-card aprobado">
-                    <div class="permission-header">
-                        <div class="permission-info">
-                            <h4>Carlos Hernández López</h4>
-                            <p>ID: EMP125 • Ventas</p>
-                        </div>
-                        <span class="permission-status aprobado">Aprobado</span>
-                    </div>
-                    <div class="permission-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Tipo de Permiso</span>
-                            <span class="detail-value">🏥 Permiso Médico</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Periodo</span>
-                            <span class="detail-value">18/11/2025 - 19/11/2025</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Duración</span>
-                            <span class="detail-value">2 días</span>
-                        </div>
+                    {% if permiso.estado == "aprobado" and permiso.aprobado_por %}
                         <div class="detail-item">
                             <span class="detail-label">Aprobado por</span>
-                            <span class="detail-value">Ana García</span>
+                            <span class="detail-value">{{ permiso.aprobado_por }}</span>
                         </div>
-                    </div>
-                    <div class="permission-description">
-                        <strong>Motivo:</strong> Cita médica especializada y procedimiento ambulatorio.
-                    </div>
+                    {% endif %}
                 </div>
-
-                <!-- Permiso 3 - Rechazado -->
-                <div class="permission-card rechazado">
-                    <div class="permission-header">
-                        <div class="permission-info">
-                            <h4>Roberto Sánchez Torres</h4>
-                            <p>ID: EMP087 • Producción</p>
-                        </div>
-                        <span class="permission-status rechazado">Rechazado</span>
-                    </div>
-                    <div class="permission-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Tipo de Permiso</span>
-                            <span class="detail-value">👤 Permiso Personal</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Periodo</span>
-                            <span class="detail-value">25/11/2025 -
+                <div class="permission-description">
+                    <strong>Motivo:</strong> {{ permiso.motivo }}
+                </div>
+                <div class="permission-actions">
+                    {% if permiso.estado == "pendiente" %}
+                        <form method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion" value="aprobar">
+                            <input type="hidden" name="permiso_id" value="{{ permiso.id }}">
+                            <button type="submit" class="action-btn btn-approve">✅ Aprobar</button>
+                        </form>
+                        <form method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion" value="rechazar">
+                            <input type="hidden" name="permiso_id" value="{{ permiso.id }}">
+                            <button type="submit" class="action-btn btn-reject">❌ Rechazar</button>
+                        </form>
+                    {% endif %}
+                    <a href="?editar={{ permiso.id }}" class="action-btn btn-edit">📝 Editar</a>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p style="margin-top:10px;color:#666;">No hay solicitudes registradas.</p>
+    {% endif %}
+</div>
