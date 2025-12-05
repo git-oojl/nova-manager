@@ -18,6 +18,99 @@ import json
 
 from .models import Empleado as EmpleadoModel
 
+import csv
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
+def generar_reporte_csv(empleado_id, empleado_nombre, departamento, puesto,
+                        fecha_inicio, fecha_fin, secciones, comentarios):
+    response = HttpResponse(content_type="text/csv")
+    filename = "reporte_empleado.csv"
+    if empleado_id:
+        filename = f"reporte_empleado_{empleado_id}.csv"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow(["Nova Manager - Reporte de Empleado"])
+    writer.writerow([])
+    writer.writerow(["Empleado ID", empleado_id])
+    writer.writerow(["Nombre", empleado_nombre])
+    writer.writerow(["Departamento", departamento])
+    writer.writerow(["Puesto", puesto])
+    writer.writerow(["Periodo", f"{fecha_inicio} a {fecha_fin}"])
+    writer.writerow([])
+    writer.writerow(["Secciones incluidas"])
+    for s in secciones:
+        writer.writerow([s])
+    writer.writerow([])
+    writer.writerow(["Comentarios"])
+    writer.writerow([comentarios])
+    return response
+
+
+def generar_reporte_pdf(empleado_id, empleado_nombre, departamento, puesto,
+                        fecha_inicio, fecha_fin, secciones, comentarios):
+    response = HttpResponse(content_type="application/pdf")
+    filename = "reporte_empleado.pdf"
+    if empleado_id:
+        filename = f"reporte_empleado_{empleado_id}.pdf"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    p = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+
+    y = height - 50
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(50, y, "Reporte de Empleado - Nova Manager")
+    y -= 30
+
+    p.setFont("Helvetica", 11)
+    lines = [
+        f"Empleado ID: {empleado_id}",
+        f"Nombre: {empleado_nombre}",
+        f"Departamento: {departamento}",
+        f"Puesto: {puesto}",
+        f"Periodo: {fecha_inicio} a {fecha_fin}",
+        "",
+        "Secciones incluidas:",
+    ]
+
+    for line in lines:
+        p.drawString(50, y, line)
+        y -= 18
+
+    # secciones
+    for s in secciones:
+        if y < 50:
+            p.showPage()
+            y = height - 50
+            p.setFont("Helvetica", 11)
+        p.drawString(70, y, f"- {s}")
+        y -= 16
+
+    # comentarios (si hay)
+    if comentarios:
+        import textwrap
+
+        if y < 70:
+            p.showPage()
+            y = height - 50
+            p.setFont("Helvetica", 11)
+        p.drawString(50, y, "Comentarios:")
+        y -= 18
+
+        for line in textwrap.wrap(comentarios, 90):
+            if y < 50:
+                p.showPage()
+                y = height - 50
+                p.setFont("Helvetica", 11)
+            p.drawString(70, y, line)
+            y -= 16
+
+    p.showPage()
+    p.save()
+    return response
+
 # Create your views here.
 # Anyone logged in can see Menu
 @login_required
@@ -163,11 +256,90 @@ def Asistencia(request):
 @login_required
 @admin_required(redirect_to='Menu')
 def Reportes(request):
-    # Prefill info if coming from Empleado page
+    # POST => generate file (PDF or CSV)
+    if request.method == "POST":
+        empleado_id = (request.POST.get("empleado-id") or "").strip()
+        empleado_nombre = (request.POST.get("empleado-nombre") or "").strip()
+        departamento = (request.POST.get("departamento") or "").strip()
+        puesto = (request.POST.get("puesto") or "").strip()
+        fecha_inicio = (request.POST.get("fecha-inicio") or "").strip()
+        fecha_fin = (request.POST.get("fecha-fin") or "").strip()
+        comentarios = (request.POST.get("comentarios") or "").strip()
+        formato = (request.POST.get("formato") or "pdf").lower()
+
+        empleado = None
+        if empleado_id:
+            try:
+                empleado = EmpleadoModel.objects.get(pk=int(empleado_id))
+            except (ValueError, EmpleadoModel.DoesNotExist):
+                empleado = None
+
+        # si encontramos al empleado en BD, completamos datos faltantes
+        if empleado:
+            if not empleado_nombre:
+                empleado_nombre = f"{empleado.nombre} {empleado.apellido}".strip()
+            if not puesto:
+                puesto = empleado.puesto or ""
+
+        # secciones seleccionadas
+        secciones = []
+        if "asistencia" in request.POST:
+            secciones.append("Registro de asistencia")
+        if "puntualidad" in request.POST:
+            secciones.append("Puntualidad")
+        if "horarios" in request.POST:
+            secciones.append("Horarios asignados")
+        if "faltas" in request.POST:
+            secciones.append("Faltas y retardos")
+        if "vacaciones" in request.POST:
+            secciones.append("Vacaciones y permisos")
+        if "evaluacion" in request.POST:
+            secciones.append("Evaluación de desempeño")
+        if "incidencias" in request.POST:
+            secciones.append("Incidencias")
+        if "horas-extra" in request.POST:
+            secciones.append("Horas extra")
+
+        if formato == "csv":
+            return generar_reporte_csv(
+                empleado_id,
+                empleado_nombre,
+                departamento,
+                puesto,
+                fecha_inicio,
+                fecha_fin,
+                secciones,
+                comentarios,
+            )
+        else:
+            # default: PDF
+            return generar_reporte_pdf(
+                empleado_id,
+                empleado_nombre,
+                departamento,
+                puesto,
+                fecha_inicio,
+                fecha_fin,
+                secciones,
+                comentarios,
+            )
+
+    # GET => mostrar formulario con prefill desde Empleado o búsqueda local
     empleado_id = (request.GET.get("empleado_id") or "").strip()
     empleado_nombre = (request.GET.get("empleado_nombre") or "").strip()
     departamento = (request.GET.get("departamento") or "").strip()
     puesto = (request.GET.get("puesto") or "").strip()
+
+    # si llega sólo el ID, intentamos resolver nombre/puesto desde BD
+    if empleado_id:
+        try:
+            emp = EmpleadoModel.objects.get(pk=int(empleado_id))
+            if not empleado_nombre:
+                empleado_nombre = f"{emp.nombre} {emp.apellido}".strip()
+            if not puesto:
+                puesto = emp.puesto or ""
+        except (ValueError, EmpleadoModel.DoesNotExist):
+            pass
 
     context = {
         "empleado_id_prefill": empleado_id,
