@@ -264,7 +264,7 @@ def Reportes(request):
         puesto = (request.POST.get("puesto") or "").strip()
         fecha_inicio = (request.POST.get("fecha-inicio") or "").strip()
         fecha_fin = (request.POST.get("fecha-fin") or "").strip()
-        comentarios = (request.POST.get("comentarios") or "").strip()
+        comentarios = (request.POST.get("notas") or "").strip()
         formato = (request.POST.get("formato") or "pdf").lower()
 
         empleado = None
