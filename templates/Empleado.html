@@ -519,6 +519,25 @@
             }
             window.location.href = url;
         }
+
+        function abrirReportesConEmpleado() {
+            const id = (document.getElementById("id")?.value || "").trim();
+            const nombre = (document.getElementById("nombre")?.value || "").trim();
+            const departamento = (document.getElementById("departamento")?.value || "").trim();
+            const puesto = (document.getElementById("puesto")?.value || "").trim();
+
+            const params = new URLSearchParams();
+            if (id) params.set("empleado_id", id);
+            if (nombre) params.set("empleado_nombre", nombre);
+            if (departamento) params.set("departamento", departamento);
+            if (puesto) params.set("puesto", puesto);
+
+            let url = "{% url 'Reportes' %}";
+            const qs = params.toString();
+            if (qs) url += "?" + qs;
+
+            window.location.href = url;
+        }
     </script>
 
 </head>
@@ -593,7 +612,7 @@
         <button type="button" class="action-btn-quick" onclick="limpiarFormulario()">
             <span>📝</span> Nuevo Registro
         </button>
-        <button type="button" class="action-btn-quick" onclick="location.href='{% url 'Reportes' %}'">
+        <button type="button" class="action-btn-quick" onclick="abrirReportesConEmpleado()">
             <span>📄</span> Generar Reporte
         </button>
         <button type="button" class="action-btn-quick"

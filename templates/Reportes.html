@@ -569,8 +569,40 @@
             document.getElementById('puesto').value = 'Gerente de RH';
         }
 
-        function seleccionarTipoReporte(tipo) {
-            alert('📊 Has seleccionado: ' + tipo);
+                function seleccionarTipoReporte(tipo) {
+            const todos = [
+                "asistencia",
+                "puntualidad",
+                "horarios",
+                "faltas",
+                "vacaciones",
+                "evaluacion",
+                "incidencias",
+                "horas-extra"
+            ];
+
+            function setChecks(idsActivos) {
+                todos.forEach(function (id) {
+                    const cb = document.getElementById(id);
+                    if (cb) {
+                        cb.checked = idsActivos.indexOf(id) !== -1;
+                    }
+                });
+            }
+
+            if (tipo === "Asistencia Mensual") {
+                // Foco en asistencia y puntualidad
+                setChecks(["asistencia", "puntualidad", "faltas"]);
+            } else if (tipo === "Nómina") {
+                // Algo tipo nómina: horarios + horas extra
+                setChecks(["asistencia", "horarios", "horas-extra"]);
+            } else if (tipo === "Desempeño") {
+                // Evaluación de desempeño
+                setChecks(["puntualidad", "evaluacion", "incidencias"]);
+            } else if (tipo === "Horas Extra") {
+                // Sólo horas extra y registro de asistencia
+                setChecks(["asistencia", "horas-extra"]);
+            }
         }
     </script>
 </head>
@@ -661,22 +693,30 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="empleado-id">ID del Empleado <span>*</span></label>
-                            <input type="text" id="empleado-id" name="empleado-id" placeholder="Ej: EMP001" onblur="buscarEmpleado()">
+                            <input type="text" id="empleado-id" name="empleado-id"
+                            placeholder="Ej: EMP001" onblur="buscarEmpleado()"
+                            value="{{ empleado_id_prefill }}">
                         </div>
                         
                         <div class="form-group">
                             <label for="empleado-nombre">Nombre Completo <span>*</span></label>
-                            <input type="text" id="empleado-nombre" name="empleado-nombre" placeholder="Nombre del empleado">
+                            <input type="text" id="empleado-nombre" name="empleado-nombre"
+                            placeholder="Nombre del empleado"
+                            value="{{ empleado_nombre_prefill }}">
                         </div>
                         
                         <div class="form-group">
                             <label for="departamento">Departamento</label>
-                            <input type="text" id="departamento" name="departamento" placeholder="Departamento">
+                            <input type="text" id="departamento" name="departamento"
+                            placeholder="Departamento"
+                            value="{{ empleado_departamento_prefill }}">
                         </div>
                         
                         <div class="form-group">
                             <label for="puesto">Puesto</label>
-                            <input type="text" id="puesto" name="puesto" placeholder="Cargo o puesto">
+                            <input type="text" id="puesto" name="puesto"
+                            placeholder="Cargo o puesto"
+                            value="{{ empleado_puesto_prefill }}">
                         </div>
                     </div>
                 </div>
@@ -774,11 +814,9 @@
                         <div class="form-group">
                             <label for="formato">Formato de Salida</label>
                             <select id="formato" name="formato">
-                                <option value="pdf">📄 PDF (Recomendado)</option>
-                                <option value="excel">📊 Excel</option>
-                                <option value="word">📝 Word</option>
-                                <option value="csv">📋 CSV</option>
-                            </select>
+    <option value="pdf">📄 PDF</option>
+    <option value="csv">📋 CSV</option>
+</select>
                         </div>
                     </div>
                 </div>

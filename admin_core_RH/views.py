@@ -163,7 +163,19 @@ def Asistencia(request):
 @login_required
 @admin_required(redirect_to='Menu')
 def Reportes(request):
-    return render(request, 'Reportes.html')
+    # Prefill info if coming from Empleado page
+    empleado_id = (request.GET.get("empleado_id") or "").strip()
+    empleado_nombre = (request.GET.get("empleado_nombre") or "").strip()
+    departamento = (request.GET.get("departamento") or "").strip()
+    puesto = (request.GET.get("puesto") or "").strip()
+
+    context = {
+        "empleado_id_prefill": empleado_id,
+        "empleado_nombre_prefill": empleado_nombre,
+        "empleado_departamento_prefill": departamento,
+        "empleado_puesto_prefill": puesto,
+    }
+    return render(request, "Reportes.html", context)
 
 @login_required
 @admin_required(redirect_to='Menu')
