@@ -1,26 +1,30 @@
-Descarga (.zip) o clona
+*Descarga (.zip) o clona
 
-Extrae a su propio folder (nova-manager)
+*Extrae a su propio folder (nova-manager)
 
-Abrir PowerShell dentro de ese folder (cd)
+*Abrir PowerShell dentro de ese folder (cd)
 
-Si no te permite ejecutarlo: Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+**Si no te permite ejecutarlo: Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 
-Crear ambiente virtual: py -m venv .venv
+*Crear ambiente virtual: py -m venv .venv
 
-Activar ambiente: .\.venv\Scripts\Activate.ps1
-INSTALAR DEPENDENCIAS: pip install -r requirements.txt
+*Activar ambiente: .\.venv\Scripts\Activate.ps1
 
-Crear base de datos limpia: python manage.py migrate
+*INSTALAR DEPENDENCIAS: pip install -r requirements.txt
 
-Crear superuser: python manage.py createsuperuser
+*Crear base de datos limpia: python manage.py migrate
 
-Crear admins en: http://127.0.0.1:8000/admin/ (Tienen que ser staff)
+*Crear superuser: python manage.py createsuperuser
 
-Crear empleados dentro de la interfaz (login) o tambien desde /admin/ (No tienen privilegios de staff)
+*Ejecutar: python manage.py runserver
 
-Acceso:
+- Crear admins en: http://127.0.0.1:8000/admin/ (Tienen que ser staff)
 
-Admins (staff): Empleado, Asistencia, Horarios, Reportes, Permisos, Contacto
+- Crear empleados dentro de la interfaz (login) o tambien desde /admin/ (No tienen privilegios de staff)
 
-Empleados normales (no staff): Asistencia, Contacto
+Accesos:
+
+- Admins (staff): Empleado, Asistencia, Horarios, Reportes, Permisos, Contacto
+
+- Empleados normales (no staff): Asistencia, Contacto
+
