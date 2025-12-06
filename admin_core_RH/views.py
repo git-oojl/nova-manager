@@ -204,15 +204,25 @@ def Reportes(request):
 
         secciones = []
         if "asistencia" in request.POST:
-            secciones.append("Registro de asistencia (fuente: módulo Asistencia)")
+            secciones.append("Registro de asistencia")
         if "puntualidad" in request.POST:
-            secciones.append("Puntualidad (fuente: Asistencia + Horarios)")
+            secciones.append("Puntualidad")
         if "horarios" in request.POST:
-            secciones.append("Horarios asignados (fuente: módulo Horarios)")
+            secciones.append("Horarios asignados")
         if "faltas" in request.POST:
-            secciones.append("Faltas y retardos (fuente: módulo Asistencia)")
+            secciones.append("Faltas y retardos")
         if "vacaciones" in request.POST:
-            secciones.append("Vacaciones y permisos (fuente: módulo Permisos)")
+            secciones.append("Vacaciones y permisos")
+
+        # --- NUEVO: horarios asignados actuales del empleado ---
+        horarios_asignados = []
+        if "horarios" in request.POST and empleado:
+            horarios_asignados = list(
+                Horario.objects.filter(
+                    empleado=empleado,
+                    activo=True,
+                ).order_by("hora_inicio")
+            )
 
         # permisos aprobados del empleado en el periodo
         permisos_periodo = []
@@ -236,6 +246,7 @@ def Reportes(request):
                 fecha_fin,
                 secciones,
                 comentarios,
+                horarios_asignados,   # <-- nuevo parámetro
                 permisos_periodo,
             )
         else:
@@ -248,6 +259,7 @@ def Reportes(request):
                 fecha_fin,
                 secciones,
                 comentarios,
+                horarios_asignados,   # <-- nuevo parámetro
                 permisos_periodo,
             )
 
@@ -277,7 +289,7 @@ def Reportes(request):
 
 
 def generar_reporte_csv(empleado_id, empleado_nombre, departamento, puesto,
-                        fecha_inicio, fecha_fin, secciones, comentarios, permisos):
+                        fecha_inicio, fecha_fin, secciones, comentarios, horarios, permisos):
     response = HttpResponse(content_type="text/csv")
     filename = "reporte_empleado.csv"
     if empleado_id:
@@ -296,6 +308,18 @@ def generar_reporte_csv(empleado_id, empleado_nombre, departamento, puesto,
     writer.writerow(["Secciones incluidas"])
     for s in secciones:
         writer.writerow([s])
+
+    # --- NUEVO: sección de horarios asignados ---
+    if horarios:
+        writer.writerow([])
+        writer.writerow(["Horarios asignados actuales"])
+        writer.writerow(["Turno", "Hora inicio", "Hora fin"])
+        for h in horarios:
+            writer.writerow([
+                h.nombre_turno,
+                h.hora_inicio.strftime("%H:%M"),
+                h.hora_fin.strftime("%H:%M"),
+            ])
 
     if permisos:
         writer.writerow([])
@@ -318,7 +342,7 @@ def generar_reporte_csv(empleado_id, empleado_nombre, departamento, puesto,
 
 
 def generar_reporte_pdf(empleado_id, empleado_nombre, departamento, puesto,
-                        fecha_inicio, fecha_fin, secciones, comentarios, permisos):
+                        fecha_inicio, fecha_fin, secciones, comentarios, horarios, permisos):
     response = HttpResponse(content_type="application/pdf")
     filename = "reporte_empleado.pdf"
     if empleado_id:
@@ -355,6 +379,24 @@ def generar_reporte_pdf(empleado_id, empleado_nombre, departamento, puesto,
             p.setFont("Helvetica", 11)
         p.drawString(70, y, f"- {s}")
         y -= 16
+
+    # --- NUEVO: horarios asignados ---
+    if horarios:
+        if y < 70:
+            p.showPage()
+            y = height - 50
+            p.setFont("Helvetica", 11)
+        p.drawString(50, y, "Horarios asignados actuales:")
+        y -= 18
+
+        for h in horarios:
+            text = f"{h.nombre_turno}: {h.hora_inicio.strftime('%H:%M')} - {h.hora_fin.strftime('%H:%M')}"
+            if y < 50:
+                p.showPage()
+                y = height - 50
+                p.setFont("Helvetica", 11)
+            p.drawString(70, y, text)
+            y -= 16
 
     if permisos:
         if y < 70:
