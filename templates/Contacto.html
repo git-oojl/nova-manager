@@ -561,99 +561,74 @@
             }
         }
     </style>
-    <script>
-        function cargarPlantilla(tipo) {
-            let asunto = '';
-            let mensaje = '';
-            
-            switch(tipo) {
-                case 'reunion':
-                    asunto = 'Convocatoria a Reunión General';
-                    mensaje = 'Estimado/a empleado/a,\n\nPor medio de la presente, se le convoca a una reunión general que se llevará a cabo:\n\nFecha: [FECHA]\nHora: [HORA]\nLugar: [LUGAR]\n\nTemas a tratar:\n- Punto 1\n- Punto 2\n- Punto 3\n\nEs importante su asistencia.\n\nSaludos cordiales,\nDepartamento de Recursos Humanos';
-                    break;
-                case 'capacitacion':
-                    asunto = 'Invitación a Capacitación';
-                    mensaje = 'Estimado/a empleado/a,\n\nTenemos el gusto de invitarle a participar en la capacitación:\n\nTema: [TEMA]\nFecha: [FECHA]\nHorario: [HORARIO]\nModalidad: [PRESENCIAL/VIRTUAL]\n\nEsta capacitación tiene como objetivo mejorar sus habilidades en [ÁREA].\n\nPor favor confirme su asistencia.\n\nSaludos cordiales,\nDepartamento de Recursos Humanos';
-                    break;
-                case 'aviso':
-                    asunto = 'Aviso Importante';
-                    mensaje = 'Estimado/a empleado/a,\n\nLe informamos sobre [ASUNTO]:\n\n[DETALLES DEL AVISO]\n\nEsto es aplicable a partir de [FECHA].\n\nPara cualquier duda, favor de contactar al departamento de RH.\n\nSaludos cordiales,\nDepartamento de Recursos Humanos';
-                    break;
-                case 'felicitacion':
-                    asunto = '¡Felicitaciones!';
-                    mensaje = 'Estimado/a [NOMBRE],\n\n¡Felicidades por [MOTIVO]!\n\nNos complace reconocer su excelente desempeño y dedicación. Su trabajo ha sido ejemplar y contribuye significativamente al éxito de la empresa.\n\nSiga así, ¡esperamos seguir contando con su valioso aporte!\n\nSaludos cordiales,\nDepartamento de Recursos Humanos';
-                    break;
-            }
-            
-            document.getElementById('asunto').value = asunto;
-            document.getElementById('mensaje').value = mensaje;
-            
-            alert('✅ Plantilla cargada. Puedes editarla según tus necesidades.');
-        }
+<script>
+    function marcarDestinatarios(ids) {
+        const checks = document.querySelectorAll('.recipient-option input[type="checkbox"]');
+        checks.forEach(cb => cb.checked = false);
+        ids.forEach(id => {
+            const cb = document.getElementById(id);
+            if (cb) cb.checked = true;
+        });
+    }
 
-        function enviarNotificacion(event) {
+    function cargarPlantilla(tipo) {
+        const asuntoInput = document.getElementById('asunto');
+        const mensajeInput = document.getElementById('mensaje');
+
+        if (!asuntoInput || !mensajeInput) return;
+
+        if (tipo === 'reunion') {
+            asuntoInput.value = 'Convocatoria a Reunión General';
+            mensajeInput.value =
+                'Estimados colaboradores,\n\n' +
+                'Les invitamos a la reunión general de la empresa que se llevará a cabo el próximo viernes...';
+            marcarDestinatarios(['todos']);       // <-- TODOS
+        } else if (tipo === 'capacitacion') {
+            asuntoInput.value = 'Invitación a Capacitación';
+            mensajeInput.value =
+                'Hola equipo,\n\n' +
+                'Los invitamos a participar en la próxima capacitación sobre nuevas herramientas...';
+            marcarDestinatarios(['tecnologia', 'operaciones']);  // ejemplo de preset
+        } else if (tipo === 'aviso') {
+            asuntoInput.value = 'Aviso Importante para el Personal';
+            mensajeInput.value =
+                'Atención a todos los empleados,\n\n' +
+                'Les compartimos el siguiente aviso importante relacionado con...';
+            marcarDestinatarios(['todos']);
+        } else if (tipo === 'felicitacion') {
+            asuntoInput.value = 'Felicitaciones por su Desempeño';
+            mensajeInput.value =
+                'Querido equipo,\n\n' +
+                'Queremos reconocer y felicitar el excelente trabajo realizado en...';
+            marcarDestinatarios(['rh']);          // por ejemplo, RH
+        }
+    }
+
+    function enviarNotificacion(event) {
+        const form = document.getElementById('notificacionForm');
+        if (!form) return true;
+
+        const asunto = document.getElementById('asunto').value.trim();
+        const mensaje = document.getElementById('mensaje').value.trim();
+        const destinatarios = Array.from(
+            document.querySelectorAll('.recipient-option input[type="checkbox"]:checked')
+        );
+
+        if (destinatarios.length === 0) {
+            alert('Por favor selecciona al menos un destinatario.');
             event.preventDefault();
-            
-            const destinatarios = document.querySelectorAll('.recipient-option input[type="checkbox"]:checked');
-            const asunto = document.getElementById('asunto').value.trim();
-            const mensaje = document.getElementById('mensaje').value.trim();
-            
-            if (destinatarios.length === 0) {
-                alert('⚠️ Por favor selecciona al menos un destinatario.');
-                return false;
-            }
-            
-            if (!asunto || !mensaje) {
-                alert('⚠️ Por favor completa el asunto y el mensaje.');
-                return false;
-            }
-            
-            // Mostrar mensaje de éxito
-            const successMsg = document.getElementById('successMessage');
-            successMsg.classList.add('show');
-            
-            // Limpiar formulario
-            document.getElementById('notificacionForm').reset();
-            
-            // Ocultar mensaje después de 5 segundos
-            setTimeout(() => {
-                successMsg.classList.remove('show');
-            }, 5000);
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            
             return false;
         }
 
-        function vistaPrevia() {
-            const asunto = document.getElementById('asunto').value.trim();
-            const mensaje = document.getElementById('mensaje').value.trim();
-            
-            if (!asunto || !mensaje) {
-                alert('⚠️ Por favor completa el asunto y el mensaje para ver la vista previa.');
-                return;
-            }
-            
-            const destinatarios = [];
-            document.querySelectorAll('.recipient-option input[type="checkbox"]:checked').forEach(checkbox => {
-                destinatarios.push(checkbox.nextElementSibling.textContent);
-            });
-            
-            let preview = `📧 VISTA PREVIA DEL CORREO\n\n`;
-            preview += `Destinatarios: ${destinatarios.length > 0 ? destinatarios.join(', ') : 'Ninguno seleccionado'}\n\n`;
-            preview += `Asunto: ${asunto}\n\n`;
-            preview += `Mensaje:\n${mensaje}`;
-            
-            alert(preview);
+        if (!asunto || !mensaje) {
+            alert('Por favor completa el asunto y el mensaje.');
+            event.preventDefault();
+            return false;
         }
 
-        function limpiarFormulario() {
-            if (confirm('¿Deseas limpiar todos los campos del formulario?')) {
-                document.getElementById('notificacionForm').reset();
-                alert('🗑️ Formulario limpiado.');
-            }
-        }
+        // dejar que el form se envíe al servidor
+        return true;
+    }
 
         function seleccionarTodos() {
             const checkboxes = document.querySelectorAll('.recipient-option input[type="checkbox"]');
@@ -706,45 +681,34 @@
         </div>
 
         <!-- Mensaje de éxito -->
-        <div id="successMessage" class="success-message">
-            <span class="success-icon">✅</span>
-            <div class="success-content">
-                <h3>¡Correo enviado exitosamente!</h3>
-                <p>La notificación ha sido enviada a los destinatarios seleccionados.</p>
-            </div>
-        </div>
+<div id="successMessage"
+     class="success-message{% if mensaje_exito %} show{% endif %}">
+    <div class="icon">✅</div>
+    <div class="content">
+        <h3>{{ mensaje_exito|default:"¡Correo enviado exitosamente!" }}</h3>
+        <p>La notificación se ha registrado correctamente.</p>
+    </div>
+    <button class="close-btn" onclick="this.parentElement.classList.remove('show')">✕</button>
+</div>
 
         <!-- Estadísticas -->
-        <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-icon">📧</div>
-                <div class="stat-content">
-                    <h3>342</h3>
-                    <p>Correos Enviados Hoy</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <div class="stat-content">
-                    <h3>450</h3>
-                    <p>Empleados Activos</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">✅</div>
-                <div class="stat-content">
-                    <h3>98.5%</h3>
-                    <p>Tasa de Entrega</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">📊</div>
-                <div class="stat-content">
-                    <h3>2,456</h3>
-                    <p>Total este Mes</p>
-                </div>
-            </div>
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon">📧</div>
+        <div class="stat-content">
+            <h3>{{ total_correos }}</h3>
+            <p>Correos Enviados</p>
         </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+            <h3>{{ empleados_activos }}</h3>
+            <p>Empleados Activos</p>
+        </div>
+    </div>
+</div>
 
         <!-- Plantillas rápidas -->
         <div class="quick-templates">
@@ -782,7 +746,10 @@
                 <p>Completa el formulario para enviar un correo electrónico a los empleados</p>
             </div>
 
-            <form id="notificacionForm" method="post" onsubmit="return enviarNotificacion(event)">
+            <form id="notificacionForm"
+                method="post"
+                enctype="multipart/form-data"
+                onsubmit="return enviarNotificacion(event)">
                 {% csrf_token %}
                 
                 <!-- Destinatarios -->
@@ -899,60 +866,34 @@
                     </div>
                 </div>
 
-                <!-- Opciones adicionales -->
-                <div class="form-section">
-                    <h3 class="section-title">
-                        <span>⚙️</span> Opciones Adicionales
-                    </h3>
-                    
-                    <div class="recipients-selector" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
-                        <div class="recipient-option">
-                            <input type="checkbox" id="copia-remitente" name="copia-remitente" checked>
-                            <label for="copia-remitente">Enviar copia a mi correo</label>
-                        </div>
-                        <div class="recipient-option">
-                            <input type="checkbox" id="confirmacion-lectura" name="confirmacion-lectura">
-                            <label for="confirmacion-lectura">Solicitar confirmación de lectura</label>
-                        </div>
-                        <div class="recipient-option">
-                            <input type="checkbox" id="programar-envio" name="programar-envio">
-                            <label for="programar-envio">Programar envío</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group" id="fecha-programada" style="display: none; margin-top: 15px;">
-                        <label for="fecha-envio">Fecha y Hora de Envío Programado</label>
-                        <input type="datetime-local" id="fecha-envio" name="fecha-envio">
-                    </div>
-                </div>
-
                 <!-- Botones de acción -->
-                <div class="action-buttons">
-                    <button type="submit" class="btn btn-send">
-                        <span>📤</span> Enviar Notificación
-                    </button>
-                    <button type="button" class="btn btn-preview" onclick="vistaPrevia()">
-                        <span>👁️</span> Vista Previa
-                    </button>
-                    <button type="button" class="btn btn-clear" onclick="limpiarFormulario()">
-                        <span>🗑️</span> Limpiar
-                    </button>
-                </div>
+                <div class="form-actions">
+    <button type="submit"
+            class="primary-btn"
+            name="accion"
+            value="enviar">
+        📤 ENVIAR NOTIFICACIÓN
+    </button>
+
+    <button type="submit"
+            class="secondary-btn"
+            name="accion"
+            value="preview"
+            formtarget="_blank">
+        👁️ VISTA PREVIA (PDF)
+    </button>
+
+    <button type="button"
+            class="ghost-btn"
+            onclick="limpiarFormulario()">
+        🧹 LIMPIAR
+    </button>
+</div>
             </form>
         </div>
     </div>
 
     <script>
-        // Mostrar/ocultar campo de fecha programada
-        document.getElementById('programar-envio').addEventListener('change', function() {
-            const fechaProgramada = document.getElementById('fecha-programada');
-            if (this.checked) {
-                fechaProgramada.style.display = 'block';
-            } else {
-                fechaProgramada.style.display = 'none';
-            }
-        });
-
         // Si se selecciona "Todos los Empleados", deseleccionar otros
         document.getElementById('todos').addEventListener('change', function() {
             if (this.checked) {

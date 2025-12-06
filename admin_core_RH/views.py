@@ -10,7 +10,13 @@ from .forms import ContactForm, EmployeeSignUpForm
 from django.contrib.auth.decorators import login_required
 from .decorators import admin_required
 
-from .models import Empleado as EmpleadoModel, Permiso, Horario, Asistencia as AsistenciaModel
+from .models import (
+    Empleado as EmpleadoModel,
+    Permiso,
+    Horario,
+    Asistencia as AsistenciaModel,
+    Notificacion,
+)
 
 from django.db.models import Q
 from django.http import HttpResponse
@@ -995,36 +1001,89 @@ def signup_employee(request):
 
     return render(request, 'registration/signup.html', {"form": form})
 
+@login_required
 def Contacto(request):
-    enviado = False
+    mensaje_exito = None
+    error = None
+
     if request.method == "POST":
-        form = ContactForm(request.POST)
-        if form.is_valid():
-            nombre = form.cleaned_data['nombre']
-            correo = form.cleaned_data['correo']
-            asunto = form.cleaned_data['asunto']
-            mensaje = form.cleaned_data['mensaje']
+        accion = request.POST.get("accion")  # 'enviar' o 'preview'
 
-            # Construir el cuerpo del correo
-            cuerpo = f"Nombre: {nombre}\nCorreo: {correo}\n\nMensaje:\n{mensaje}"
+        prioridad = (request.POST.get("prioridad") or "normal").lower()
+        asunto = (request.POST.get("asunto") or "").strip()
+        cuerpo = (request.POST.get("mensaje") or "").strip()
+        remitente_nombre = (request.POST.get("remitente") or "").strip()
+        remitente_email = (request.POST.get("email-remitente") or "").strip()
 
-            email = EmailMessage(
-                subject=f"[Contacto] {asunto}",
-                body=cuerpo,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[settings.EMAIL_HOST_USER],  # destinatario: cuenta del RH
-                reply_to=[correo],
+        # checkboxes de destinatarios: usamos mismo name con valores distintos
+        destinatarios_vals = request.POST.getlist("destinatarios")
+        destinatarios_txt = ",".join(destinatarios_vals)
+
+        if not destinatarios_vals:
+            error = "Por favor selecciona al menos un destinatario."
+        elif not asunto or not cuerpo:
+            error = "Por favor completa el asunto y el mensaje."
+
+        # --- Vista previa en PDF ---
+        if not error and accion == "preview":
+            response = HttpResponse(content_type="application/pdf")
+            response["Content-Disposition"] = 'attachment; filename=\"vista_previa_notificacion.pdf\"'
+
+            p = canvas.Canvas(response, pagesize=letter)
+            width, height = letter
+            y = height - 50
+
+            p.setFont("Helvetica-Bold", 16)
+            p.drawString(50, y, "Vista previa de notificación - Nova Manager")
+            y -= 30
+
+            p.setFont("Helvetica", 11)
+            header_lines = [
+                f"Prioridad: {prioridad.capitalize()}",
+                f"Asunto: {asunto}",
+                f"Remitente: {remitente_nombre or 'N/D'} ({remitente_email or 'N/D'})",
+                f"Destinatarios: {destinatarios_txt or 'Ninguno'}",
+                "",
+                "Mensaje:",
+                "",
+            ]
+            for line in header_lines:
+                p.drawString(50, y, line)
+                y -= 18
+
+            import textwrap
+            for line in textwrap.wrap(cuerpo, 90):
+                if y < 50:
+                    p.showPage()
+                    y = height - 50
+                    p.setFont("Helvetica", 11)
+                p.drawString(50, y, line)
+                y -= 15
+
+            p.showPage()
+            p.save()
+            return response
+
+        # --- Enviar / registrar notificación ---
+        if not error and accion == "enviar":
+            Notificacion.objects.create(
+                prioridad=prioridad,
+                asunto=asunto,
+                mensaje=cuerpo,
+                remitente_nombre=remitente_nombre,
+                remitente_email=remitente_email,
+                destinatarios=destinatarios_txt,
             )
+            mensaje_exito = "Notificación registrada correctamente."
 
-            try:
-                email.send(fail_silently=False)
-                enviado = True
-                # opcional: redirect('contacto_exito')
-            except Exception as e:
-                logger.exception("Error al enviar correo: %s", e)
-                form.add_error(None, "Ocurrió un error al enviar el correo. Intenta de nuevo más tarde.")
+    # --- Estadísticas para los cards ---
+    total_correos = Notificacion.objects.count()
+    empleados_activos = EmpleadoModel.objects.filter(estado=True).count()
 
-    else:
-        form = ContactForm()
-
-    return render(request, 'contacto.html', {'form': form, 'enviado': enviado})
+    context = {
+        "total_correos": total_correos,
+        "empleados_activos": empleados_activos,
+        "mensaje_exito": mensaje_exito,
+        "error": error,
+    }
+    return render(request, "Contacto.html", context)

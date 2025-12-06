@@ -90,3 +90,25 @@ class Permiso(models.Model):
 
     def __str__(self):
         return f"{self.empleado.nombre} {self.empleado.apellido} - {self.get_tipo_display()} ({self.get_estado_display()})"
+    
+class Notificacion(models.Model):
+    PRIORIDAD_CHOICES = [
+        ("normal", "Normal"),
+        ("alta", "Alta"),
+        ("urgente", "Urgente"),
+    ]
+
+    prioridad = models.CharField(max_length=10, choices=PRIORIDAD_CHOICES, default="normal")
+    asunto = models.CharField(max_length=255)
+    mensaje = models.TextField()
+    remitente_nombre = models.CharField(max_length=255, blank=True)
+    remitente_email = models.EmailField(blank=True)
+    destinatarios = models.TextField(blank=True)  # ej. "todos,rh,ventas"
+    fecha_envio = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Notificación"
+        verbose_name_plural = "Notificaciones"
+
+    def __str__(self):
+        return f"{self.asunto} ({self.prioridad})"
