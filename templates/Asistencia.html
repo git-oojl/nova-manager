@@ -560,6 +560,22 @@
             }
         });
     }
+
+    // NUEVO: buscar empleado por ID y prellenar nombre
+    function buscarEmpleadoAsistencia() {
+        const input = document.getElementById('empleado-id');
+        if (!input) return;
+
+        const empId = input.value.trim();
+        if (!empId) return;
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('empleado_id', empId);
+        // opcional: limpiar búsqueda por nombre
+        url.searchParams.delete('nombre');
+
+        window.location.href = url.toString();
+    }
 </script>
 
 </head>
@@ -667,6 +683,8 @@
                 name="empleado_id"
                 placeholder="Ej: 1"
                 value="{{ empleado_id_prefill }}"
+                onblur="buscarEmpleadoAsistencia()"
+                onkeydown="if (event.key === 'Enter') { event.preventDefault(); buscarEmpleadoAsistencia(); }"
             >
         </div>
 
@@ -676,7 +694,6 @@
                 type="text"
                 id="empleado-nombre"
                 value="{{ empleado_nombre_prefill }}"
-                readonly
             >
         </div>
 
@@ -796,36 +813,6 @@
         </div>
     {% endif %}
 </div>
-
-            <div class="record-card salida">
-                <button class="close-btn" onclick="cerrarTarjeta(this)">×</button>
-                <div class="record-header">
-                    <div class="record-icon">🟠</div>
-                    <h3 class="record-title">Salida</h3>
-                </div>
-                <div class="record-info">
-                    <div class="record-info-item">
-                        <span class="record-info-label">Empleado:</span>
-                        <span class="record-info-value">María José Martínez Lomelí</span>
-                    </div>
-                    <div class="record-info-item">
-                        <span class="record-info-label">Fecha:</span>
-                        <span class="record-info-value">31/10/2025</span>
-                    </div>
-                    <div class="record-info-item">
-                        <span class="record-info-label">Hora:</span>
-                        <span class="record-info-value">17:00 PM</span>
-                    </div>
-                </div>
-                <div class="record-buttons">
-                    <button class="btn btn-save" onclick="guardarRegistro('salida')">
-                        <span>💾</span> Guardar
-                    </button>
-                    <button class="btn btn-update" onclick="actualizarRegistro('salida')">
-                        <span>📝</span> Actualizar
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 </body>

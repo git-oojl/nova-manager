@@ -207,16 +207,29 @@ def Asistencia(request):
                 except ValueError:
                     error = "La fecha u hora no son válidas."
 
-            if not error and empleado:
-                AsistenciaModel.objects.create(
+            if not error and empleado and dt:
+                # Evitar duplicados exactos al refrescar la página
+                ya_existe = AsistenciaModel.objects.filter(
                     empleado=empleado,
                     tipo=tipo,
                     fecha_hora=dt,
-                    es_retardo=es_retardo,
-                    es_falta=es_falta,
-                    comentario=comentario,
-                )
-                mensaje = "Registro de asistencia guardado correctamente."
+                ).exists()
+
+                if ya_existe:
+                    mensaje = (
+                        "Este registro de asistencia ya existía, "
+                        "no se creó un duplicado."
+                    )
+                else:
+                    AsistenciaModel.objects.create(
+                        empleado=empleado,
+                        tipo=tipo,
+                        fecha_hora=dt,
+                        es_retardo=es_retardo,
+                        es_falta=es_falta,
+                        comentario=comentario,
+                    )
+                    mensaje = "Registro de asistencia guardado correctamente."
 
         # después de un POST, usamos el mismo ID para pre-llenar
         empleado_id_prefill = emp_id
