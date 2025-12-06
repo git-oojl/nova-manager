@@ -759,16 +759,20 @@
     {% if asistencias %}
         {% for reg in asistencias %}
             <div class="record-card {{ reg.tipo }}">
-                <button class="close-btn" onclick="cerrarTarjeta(this)">×</button>
-
-                <div class="record-header">
-                    <div class="record-icon">
-                        {% if reg.tipo == 'entrada' %}🔵{% else %}🟠{% endif %}
-                    </div>
-                    <h3 class="record-title">
-                        {% if reg.tipo == 'entrada' %}Entrada{% else %}Salida{% endif %}
-                    </h3>
-                </div>
+    <form method="post" style="position:absolute; top:12px; right:14px;">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="eliminar">
+        <input type="hidden" name="registro_id" value="{{ reg.id }}">
+        <button type="submit" class="close-btn">×</button>
+    </form>
+    <div class="record-header">
+        <div class="record-icon">
+            {% if reg.tipo == 'entrada' %}🔵{% else %}🟠{% endif %}
+        </div>
+        <h3 class="record-title">
+            {% if reg.tipo == 'entrada' %}Entrada{% else %}Salida{% endif %}
+        </h3>
+    </div>
 
                 <div class="record-info">
                     <div class="record-info-item">

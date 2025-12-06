@@ -164,7 +164,7 @@ def Empleado(request):
     return render(request, "Empleado.html", context)
 
 @login_required
-@admin_required(redirect_to='Menu')
+@admin_required(redirect_to="Menu")
 def Asistencia(request):
     today = timezone.localdate()
     now = timezone.localtime()
@@ -173,9 +173,11 @@ def Asistencia(request):
     error = None
     empleado = None
 
-    # ---------- Crear registro de asistencia (POST) ----------
+    empleado_id_prefill = ""
+    empleado_nombre_prefill = ""
+
     if request.method == "POST":
-        accion = request.POST.get("accion")
+        accion = (request.POST.get("accion") or "").strip()
         emp_id = (request.POST.get("empleado_id") or "").strip()
         tipo = (request.POST.get("tipo") or "").strip()          # entrada / salida
         fecha = (request.POST.get("fecha") or "").strip()
@@ -184,7 +186,22 @@ def Asistencia(request):
         es_retardo = bool(request.POST.get("es_retardo"))
         es_falta = bool(request.POST.get("es_falta"))
 
-        if accion == "crear":
+        # --------- ELIMINAR REGISTRO ----------
+        if accion == "eliminar":
+            reg_id = (request.POST.get("registro_id") or "").strip()
+            try:
+                registro = AsistenciaModel.objects.select_related("empleado").get(
+                    pk=int(reg_id)
+                )
+                empleado = registro.empleado
+                emp_id = str(empleado.id)
+                registro.delete()
+                mensaje = "Registro de asistencia eliminado correctamente."
+            except (ValueError, AsistenciaModel.DoesNotExist):
+                error = "No se encontró el registro de asistencia a eliminar."
+
+        # --------- CREAR REGISTRO ----------
+        elif accion == "crear":
             if not emp_id or not tipo:
                 error = "Por favor indica el empleado y el tipo de registro."
             else:
@@ -194,13 +211,14 @@ def Asistencia(request):
                     empleado = None
                     error = "No se encontró el empleado indicado."
 
+            # valores por defecto para hoy / ahora
             if not fecha:
                 fecha = today.strftime("%Y-%m-%d")
             if not hora:
                 hora = now.strftime("%H:%M")
 
             dt = None
-            if not error:
+            if not error and empleado:
                 try:
                     dt_naive = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M")
                     dt = timezone.make_aware(dt_naive, timezone.get_current_timezone())
@@ -231,7 +249,7 @@ def Asistencia(request):
                     )
                     mensaje = "Registro de asistencia guardado correctamente."
 
-        # después de un POST, usamos el mismo ID para pre-llenar
+        # Después de cualquier POST, usamos el ID para pre-llenar el formulario
         empleado_id_prefill = emp_id
         empleado_nombre_prefill = ""
         if empleado:
@@ -248,61 +266,51 @@ def Asistencia(request):
             except (ValueError, EmpleadoModel.DoesNotExist):
                 empleado_nombre_prefill = ""
 
-    # ---------- Filtro de búsqueda por nombre (GET ?nombre=...) ----------
-    nombre_busqueda = (request.GET.get("nombre") or "").strip()
+    # ---------- FILTRO POR NOMBRE PARA LA LISTA ----------
+    filtro_nombre = (request.GET.get("nombre") or "").strip()
     asistencias_qs = AsistenciaModel.objects.select_related("empleado")
 
-    if nombre_busqueda:
-        partes = nombre_busqueda.split()
-        for p in partes:
-            asistencias_qs = asistencias_qs.filter(
-                Q(empleado__nombre__icontains=p) |
-                Q(empleado__apellido__icontains=p)
-            )
-
-    # mostramos sólo los últimos 20 registros
-    asistencias = list(asistencias_qs.order_by("-fecha_hora")[:20])
-
-    # ---------- Estadísticas del día ----------
-    total_empleados_activos = EmpleadoModel.objects.filter(estado=True).count()
-    empleados_presentes_hoy = (
-        AsistenciaModel.objects.filter(
-            tipo="entrada",
-            fecha_hora__date=today,
-            es_falta=False,
+    if filtro_nombre:
+        asistencias_qs = asistencias_qs.filter(
+            Q(empleado__nombre__icontains=filtro_nombre)
+            | Q(empleado__apellido__icontains=filtro_nombre)
         )
-        .values("empleado")
-        .distinct()
-        .count()
+
+    asistencias = list(asistencias_qs.order_by("-fecha_hora")[:50])
+
+    # ---------- ESTADÍSTICAS DE HOY ----------
+    total_empleados = EmpleadoModel.objects.count()
+
+    entradas_hoy_qs = AsistenciaModel.objects.filter(
+        fecha_hora__date=today, tipo="entrada", es_falta=False
     )
 
-    asistencia_hoy_pct = int(
-        empleados_presentes_hoy * 100 / total_empleados_activos
-    ) if total_empleados_activos else 0
+    empleados_con_asistencia_hoy = (
+        entradas_hoy_qs.values("empleado_id").distinct().count()
+    )
 
-    entradas_hoy = AsistenciaModel.objects.filter(
-        tipo="entrada",
-        fecha_hora__date=today,
-    ).count()
+    if total_empleados > 0:
+        asistencia_hoy_pct = round(
+            empleados_con_asistencia_hoy * 100.0 / total_empleados, 1
+        )
+    else:
+        asistencia_hoy_pct = 0
 
+    entradas_hoy = entradas_hoy_qs.count()
     retardos_hoy = AsistenciaModel.objects.filter(
-        tipo="entrada",
-        fecha_hora__date=today,
-        es_retardo=True,
+        fecha_hora__date=today, tipo="entrada", es_retardo=True
     ).count()
 
     context = {
-        "mensaje": mensaje,
-        "error": error,
         "asistencia_hoy_pct": asistencia_hoy_pct,
         "entradas_hoy": entradas_hoy,
         "retardos_hoy": retardos_hoy,
         "asistencias": asistencias,
-        "nombre_busqueda": nombre_busqueda,
+        "filtro_nombre": filtro_nombre,
         "empleado_id_prefill": empleado_id_prefill,
         "empleado_nombre_prefill": empleado_nombre_prefill,
-        "default_fecha": today.strftime("%Y-%m-%d"),
-        "default_hora": now.strftime("%H:%M"),
+        "mensaje": mensaje,
+        "error": error,
     }
     return render(request, "Asistencia.html", context)
 
