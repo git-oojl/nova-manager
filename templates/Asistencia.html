@@ -537,78 +537,31 @@
             }
         }
     </style>
-    <script>
-        function buscarEmpleado() {
-            const nombre = document.getElementById("nombre-completo").value.trim();
-            
-            if (nombre === "") {
-                alert("⚠️ Por favor ingresa un nombre para buscar.");
-                return;
-            }
-            
-            alert(`🔍 Buscando registros de asistencia para: ${nombre}`);
-            
-            // Mostrar las tarjetas de ejemplo
-            document.querySelectorAll('.record-card').forEach(card => {
+<script>
+    function cerrarTarjeta(elemento) {
+        elemento.closest('.record-card').style.display = 'none';
+    }
+
+    function filtrarRegistros(tipo, boton) {
+        // botones activos
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        if (boton) {
+            boton.classList.add('active');
+        }
+
+        const cards = document.querySelectorAll('.record-card');
+        cards.forEach(card => {
+            if (tipo === 'todos' || card.classList.contains(tipo)) {
                 card.style.display = 'block';
-            });
-            
-            // Ocultar estado vacío si existe
-            const emptyState = document.querySelector('.empty-state');
-            if (emptyState) {
-                emptyState.style.display = 'none';
-            }
-        }
-
-        function cerrarTarjeta(elemento) {
-            elemento.closest('.record-card').style.display = 'none';
-        }
-
-        function guardarRegistro(tipo) {
-            alert(`💾 Registro de ${tipo} guardado exitosamente`);
-        }
-
-        function actualizarRegistro(tipo) {
-            alert(`📝 Registro de ${tipo} actualizado exitosamente`);
-        }
-
-        function filtrarRegistros(tipo) {
-            // Remover clase active de todos los botones
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Agregar clase active al botón clickeado
-            event.target.classList.add('active');
-            
-            const cards = document.querySelectorAll('.record-card');
-            
-            if (tipo === 'todos') {
-                cards.forEach(card => card.style.display = 'block');
             } else {
-                cards.forEach(card => {
-                    if (card.classList.contains(tipo)) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            }
-        }
-
-        // Permitir buscar con Enter
-        document.addEventListener('DOMContentLoaded', function() {
-            const input = document.getElementById('nombre-completo');
-            if (input) {
-                input.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        buscarEmpleado();
-                    }
-                });
+                card.style.display = 'none';
             }
         });
-    </script>
+    }
+</script>
+
 </head>
 <body>
     <!-- Barra superior -->
@@ -654,21 +607,21 @@
             <div class="stat-card">
                 <div class="stat-icon">✅</div>
                 <div class="stat-content">
-                    <h3>98.5%</h3>
+                    <h3>{{ asistencia_hoy_pct }}%</h3>
                     <p>Asistencia Hoy</p>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">🕐</div>
                 <div class="stat-content">
-                    <h3>337</h3>
+                    <h3>{{ entradas_hoy }}</h3>
                     <p>Entradas Registradas</p>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">⏰</div>
                 <div class="stat-content">
-                    <h3>12</h3>
+                    <h3>{{ retardos_hoy }}</h3>
                     <p>Retardos Hoy</p>
                 </div>
             </div>
@@ -680,56 +633,169 @@
                 <div class="search-icon">🔍</div>
                 <h2 class="search-title">Buscar Registros de Asistencia</h2>
             </div>
-            <form class="search-form" onsubmit="event.preventDefault(); buscarEmpleado();">
-                <div class="search-input-group">
-                    <label for="nombre-completo">Nombre completo del empleado</label>
-                    <input type="text" id="nombre-completo" name="nombre-completo" placeholder="Ingresa el nombre completo del empleado">
-                </div>
-                <button type="submit" class="search-btn">Buscar</button>
-            </form>
+<form class="search-form" method="get">
+    <div class="search-input-group">
+        <label for="nombre">Nombre completo del empleado</label>
+        <input
+            type="text"
+            id="nombre"
+            name="nombre"
+            placeholder="Ingresa el nombre completo del empleado"
+            value="{{ nombre_busqueda|default:'' }}"
+        >
+    </div>
+    <button type="submit" class="search-btn">Buscar</button>
+</form>
         </div>
+
+<!-- Registro manual de asistencia -->
+<div class="search-section" style="margin-top: 25px; border-color:#296A2D;">
+    <div class="search-header">
+        <div class="search-icon">⏱️</div>
+        <h2 class="search-title">Registrar asistencia manual</h2>
+    </div>
+
+    <form method="post" class="search-form">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="crear">
+
+        <div class="search-input-group">
+            <label for="empleado-id">ID del empleado *</label>
+            <input
+                type="text"
+                id="empleado-id"
+                name="empleado_id"
+                placeholder="Ej: 1"
+                value="{{ empleado_id_prefill }}"
+            >
+        </div>
+
+        <div class="search-input-group">
+            <label for="empleado-nombre">Nombre del empleado</label>
+            <input
+                type="text"
+                id="empleado-nombre"
+                value="{{ empleado_nombre_prefill }}"
+                readonly
+            >
+        </div>
+
+        <div class="search-input-group">
+            <label for="tipo">Tipo de registro *</label>
+            <select id="tipo" name="tipo">
+                <option value="entrada">Entrada</option>
+                <option value="salida">Salida</option>
+            </select>
+        </div>
+
+        <div class="search-input-group">
+            <label for="fecha">Fecha *</label>
+            <input type="date" id="fecha" name="fecha" value="{{ default_fecha }}">
+        </div>
+
+        <div class="search-input-group">
+            <label for="hora">Hora *</label>
+            <input type="time" id="hora" name="hora" value="{{ default_hora }}">
+        </div>
+
+        <div class="search-input-group">
+            <label for="comentario">Comentario</label>
+            <input
+                type="text"
+                id="comentario"
+                name="comentario"
+                placeholder="Opcional (ej. llegada tarde por tráfico)"
+            >
+        </div>
+
+        <div class="search-input-group">
+            <label>Marcadores</label>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <label><input type="checkbox" name="es_retardo"> Retardo</label>
+                <label><input type="checkbox" name="es_falta"> Falta</label>
+            </div>
+        </div>
+
+        <button type="submit" class="search-btn">Guardar registro</button>
+    </form>
+
+    {% if mensaje %}
+        <p style="margin-top:10px; color:#1b5e20; font-weight:600;">{{ mensaje }}</p>
+    {% endif %}
+    {% if error %}
+        <p style="margin-top:10px; color:#c0392b; font-weight:600;">{{ error }}</p>
+    {% endif %}
+</div>
 
         <!-- Filtros de registros -->
         <div class="records-header">
             <h3 class="records-title">Registros de Asistencia</h3>
             <div class="filter-buttons">
-                <button class="filter-btn active" onclick="filtrarRegistros('todos')">Todos</button>
-                <button class="filter-btn" onclick="filtrarRegistros('entrada')">Entradas</button>
-                <button class="filter-btn" onclick="filtrarRegistros('salida')">Salidas</button>
+                <button class="filter-btn active" onclick="filtrarRegistros('todos', this)">Todos</button>
+                <button class="filter-btn" onclick="filtrarRegistros('entrada', this)">Entradas</button>
+                <button class="filter-btn" onclick="filtrarRegistros('salida', this)">Salidas</button>
             </div>
         </div>
 
-        <!-- Registros -->
-        <div class="records-section">
-            <div class="record-card entrada">
+<!-- Registros -->
+<div class="records-section">
+    {% if asistencias %}
+        {% for reg in asistencias %}
+            <div class="record-card {{ reg.tipo }}">
                 <button class="close-btn" onclick="cerrarTarjeta(this)">×</button>
+
                 <div class="record-header">
-                    <div class="record-icon">🔵</div>
-                    <h3 class="record-title">Entrada</h3>
+                    <div class="record-icon">
+                        {% if reg.tipo == 'entrada' %}🔵{% else %}🟠{% endif %}
+                    </div>
+                    <h3 class="record-title">
+                        {% if reg.tipo == 'entrada' %}Entrada{% else %}Salida{% endif %}
+                    </h3>
                 </div>
+
                 <div class="record-info">
                     <div class="record-info-item">
                         <span class="record-info-label">Empleado:</span>
-                        <span class="record-info-value">María José Martínez Lomelí</span>
+                        <span class="record-info-value">
+                            {{ reg.empleado.nombre }} {{ reg.empleado.apellido }}
+                        </span>
                     </div>
                     <div class="record-info-item">
                         <span class="record-info-label">Fecha:</span>
-                        <span class="record-info-value">31/10/2025</span>
+                        <span class="record-info-value">
+                            {{ reg.fecha_hora|date:"d/m/Y" }}
+                        </span>
                     </div>
                     <div class="record-info-item">
                         <span class="record-info-label">Hora:</span>
-                        <span class="record-info-value">10:00 AM</span>
+                        <span class="record-info-value">
+                            {{ reg.fecha_hora|time:"H:i" }}
+                        </span>
+                    </div>
+                    <div class="record-info-item">
+                        <span class="record-info-label">Detalles:</span>
+                        <span class="record-info-value">
+                            {% if reg.es_falta %}
+                                ⚠️ Falta
+                            {% elif reg.es_retardo %}
+                                ⏰ Retardo
+                            {% else %}
+                                ✓ Puntual
+                            {% endif %}
+                            {% if reg.comentario %} – {{ reg.comentario }}{% endif %}
+                        </span>
                     </div>
                 </div>
-                <div class="record-buttons">
-                    <button class="btn btn-save" onclick="guardarRegistro('entrada')">
-                        <span>💾</span> Guardar
-                    </button>
-                    <button class="btn btn-update" onclick="actualizarRegistro('entrada')">
-                        <span>📝</span> Actualizar
-                    </button>
-                </div>
             </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <h3>Sin registros de asistencia</h3>
+            <p>Registra una nueva entrada o salida o utiliza el buscador para filtrar por empleado.</p>
+        </div>
+    {% endif %}
+</div>
 
             <div class="record-card salida">
                 <button class="close-btn" onclick="cerrarTarjeta(this)">×</button>

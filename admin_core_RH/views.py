@@ -10,7 +10,7 @@ from .forms import ContactForm, EmployeeSignUpForm
 from django.contrib.auth.decorators import login_required
 from .decorators import admin_required
 
-from .models import Empleado as EmpleadoModel, Permiso, Horario, Asistencia
+from .models import Empleado as EmpleadoModel, Permiso, Horario, Asistencia as AsistenciaModel
 
 from django.db.models import Q
 from django.http import HttpResponse
@@ -164,8 +164,134 @@ def Empleado(request):
     return render(request, "Empleado.html", context)
 
 @login_required
+@admin_required(redirect_to='Menu')
 def Asistencia(request):
-    return render(request, 'Asistencia.html')
+    today = timezone.localdate()
+    now = timezone.localtime()
+
+    mensaje = None
+    error = None
+    empleado = None
+
+    # ---------- Crear registro de asistencia (POST) ----------
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+        emp_id = (request.POST.get("empleado_id") or "").strip()
+        tipo = (request.POST.get("tipo") or "").strip()          # entrada / salida
+        fecha = (request.POST.get("fecha") or "").strip()
+        hora = (request.POST.get("hora") or "").strip()
+        comentario = (request.POST.get("comentario") or "").strip()
+        es_retardo = bool(request.POST.get("es_retardo"))
+        es_falta = bool(request.POST.get("es_falta"))
+
+        if accion == "crear":
+            if not emp_id or not tipo:
+                error = "Por favor indica el empleado y el tipo de registro."
+            else:
+                try:
+                    empleado = EmpleadoModel.objects.get(pk=int(emp_id))
+                except (ValueError, EmpleadoModel.DoesNotExist):
+                    empleado = None
+                    error = "No se encontró el empleado indicado."
+
+            if not fecha:
+                fecha = today.strftime("%Y-%m-%d")
+            if not hora:
+                hora = now.strftime("%H:%M")
+
+            dt = None
+            if not error:
+                try:
+                    dt_naive = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M")
+                    dt = timezone.make_aware(dt_naive, timezone.get_current_timezone())
+                except ValueError:
+                    error = "La fecha u hora no son válidas."
+
+            if not error and empleado:
+                AsistenciaModel.objects.create(
+                    empleado=empleado,
+                    tipo=tipo,
+                    fecha_hora=dt,
+                    es_retardo=es_retardo,
+                    es_falta=es_falta,
+                    comentario=comentario,
+                )
+                mensaje = "Registro de asistencia guardado correctamente."
+
+        # después de un POST, usamos el mismo ID para pre-llenar
+        empleado_id_prefill = emp_id
+        empleado_nombre_prefill = ""
+        if empleado:
+            empleado_nombre_prefill = f"{empleado.nombre} {empleado.apellido}".strip()
+
+    else:
+        # ---------- GET: pre-llenar empleado si viene desde otro módulo ----------
+        empleado_id_prefill = (request.GET.get("empleado_id") or "").strip()
+        empleado_nombre_prefill = ""
+        if empleado_id_prefill:
+            try:
+                emp = EmpleadoModel.objects.get(pk=int(empleado_id_prefill))
+                empleado_nombre_prefill = f"{emp.nombre} {emp.apellido}".strip()
+            except (ValueError, EmpleadoModel.DoesNotExist):
+                empleado_nombre_prefill = ""
+
+    # ---------- Filtro de búsqueda por nombre (GET ?nombre=...) ----------
+    nombre_busqueda = (request.GET.get("nombre") or "").strip()
+    asistencias_qs = AsistenciaModel.objects.select_related("empleado")
+
+    if nombre_busqueda:
+        partes = nombre_busqueda.split()
+        for p in partes:
+            asistencias_qs = asistencias_qs.filter(
+                Q(empleado__nombre__icontains=p) |
+                Q(empleado__apellido__icontains=p)
+            )
+
+    # mostramos sólo los últimos 20 registros
+    asistencias = list(asistencias_qs.order_by("-fecha_hora")[:20])
+
+    # ---------- Estadísticas del día ----------
+    total_empleados_activos = EmpleadoModel.objects.filter(estado=True).count()
+    empleados_presentes_hoy = (
+        AsistenciaModel.objects.filter(
+            tipo="entrada",
+            fecha_hora__date=today,
+            es_falta=False,
+        )
+        .values("empleado")
+        .distinct()
+        .count()
+    )
+
+    asistencia_hoy_pct = int(
+        empleados_presentes_hoy * 100 / total_empleados_activos
+    ) if total_empleados_activos else 0
+
+    entradas_hoy = AsistenciaModel.objects.filter(
+        tipo="entrada",
+        fecha_hora__date=today,
+    ).count()
+
+    retardos_hoy = AsistenciaModel.objects.filter(
+        tipo="entrada",
+        fecha_hora__date=today,
+        es_retardo=True,
+    ).count()
+
+    context = {
+        "mensaje": mensaje,
+        "error": error,
+        "asistencia_hoy_pct": asistencia_hoy_pct,
+        "entradas_hoy": entradas_hoy,
+        "retardos_hoy": retardos_hoy,
+        "asistencias": asistencias,
+        "nombre_busqueda": nombre_busqueda,
+        "empleado_id_prefill": empleado_id_prefill,
+        "empleado_nombre_prefill": empleado_nombre_prefill,
+        "default_fecha": today.strftime("%Y-%m-%d"),
+        "default_hora": now.strftime("%H:%M"),
+    }
+    return render(request, "Asistencia.html", context)
 
 @login_required
 @admin_required(redirect_to='Menu')
@@ -236,6 +362,37 @@ def Reportes(request):
                 ).order_by("fecha_inicio")
             )
 
+                # --- Asistencia en el periodo ---
+        asistencias_periodo = []
+        resumen_puntualidad = {}
+
+        if empleado and fi_date and ff_date:
+            qs_asistencia = AsistenciaModel.objects.filter(
+                empleado=empleado,
+                fecha_hora__date__gte=fi_date,
+                fecha_hora__date__lte=ff_date,
+            ).order_by("fecha_hora")
+
+            if "asistencia" in request.POST:
+                asistencias_periodo = list(qs_asistencia)
+
+            if "puntualidad" in request.POST or "faltas" in request.POST:
+                entradas_qs = qs_asistencia.filter(tipo="entrada")
+                total_entradas = entradas_qs.count()
+                retardos = entradas_qs.filter(es_retardo=True).count()
+                faltas = qs_asistencia.filter(es_falta=True).count()
+
+                puntualidad_pct = int(
+                    (total_entradas - retardos) * 100 / total_entradas
+                ) if total_entradas else 0
+
+                resumen_puntualidad = {
+                    "total_entradas": total_entradas,
+                    "retardos": retardos,
+                    "faltas": faltas,
+                    "puntualidad_pct": puntualidad_pct,
+                }
+
         if formato == "csv":
             return generar_reporte_csv(
                 empleado_id,
@@ -246,8 +403,10 @@ def Reportes(request):
                 fecha_fin,
                 secciones,
                 comentarios,
-                horarios_asignados,   # <-- nuevo parámetro
+                horarios_asignados,
                 permisos_periodo,
+                asistencias_periodo,
+                resumen_puntualidad,
             )
         else:
             return generar_reporte_pdf(
@@ -259,8 +418,10 @@ def Reportes(request):
                 fecha_fin,
                 secciones,
                 comentarios,
-                horarios_asignados,   # <-- nuevo parámetro
+                horarios_asignados,
                 permisos_periodo,
+                asistencias_periodo,
+                resumen_puntualidad,
             )
 
     # GET => mostrar formulario (prefill desde Empleado / búsqueda)
@@ -289,7 +450,8 @@ def Reportes(request):
 
 
 def generar_reporte_csv(empleado_id, empleado_nombre, departamento, puesto,
-                        fecha_inicio, fecha_fin, secciones, comentarios, horarios, permisos):
+                        fecha_inicio, fecha_fin, secciones, comentarios,
+                        horarios, permisos, asistencias, resumen_puntualidad):
     response = HttpResponse(content_type="text/csv")
     filename = "reporte_empleado.csv"
     if empleado_id:
@@ -338,11 +500,35 @@ def generar_reporte_csv(empleado_id, empleado_nombre, departamento, puesto,
     writer.writerow([])
     writer.writerow(["Comentarios"])
     writer.writerow([comentarios])
+
+    if asistencias:
+        writer.writerow([])
+        writer.writerow(["Registro de asistencia en el periodo"])
+        writer.writerow(["Fecha", "Hora", "Tipo", "Retardo", "Falta", "Comentario"])
+        for a in asistencias:
+            writer.writerow([
+                a.fecha_hora.strftime("%d/%m/%Y"),
+                a.fecha_hora.strftime("%H:%M"),
+                a.get_tipo_display(),
+                "Sí" if a.es_retardo else "No",
+                "Sí" if a.es_falta else "No",
+                a.comentario,
+            ])
+
+    if resumen_puntualidad:
+        writer.writerow([])
+        writer.writerow(["Resumen de puntualidad"])
+        writer.writerow(["Total entradas", resumen_puntualidad.get("total_entradas", 0)])
+        writer.writerow(["Retardos", resumen_puntualidad.get("retardos", 0)])
+        writer.writerow(["Faltas", resumen_puntualidad.get("faltas", 0)])
+        writer.writerow(["Porcentaje de puntualidad",
+                         f"{resumen_puntualidad.get('puntualidad_pct', 0)}%"])
     return response
 
 
 def generar_reporte_pdf(empleado_id, empleado_nombre, departamento, puesto,
-                        fecha_inicio, fecha_fin, secciones, comentarios, horarios, permisos):
+                        fecha_inicio, fecha_fin, secciones, comentarios,
+                        horarios, permisos, asistencias, resumen_puntualidad):
     response = HttpResponse(content_type="application/pdf")
     filename = "reporte_empleado.pdf"
     if empleado_id:
@@ -419,6 +605,55 @@ def generar_reporte_pdf(empleado_id, empleado_nombre, departamento, puesto,
                 y = height - 50
                 p.setFont("Helvetica", 11)
             p.drawString(70, y, text)
+            y -= 16
+
+    if asistencias:
+        if y < 70:
+            p.showPage()
+            y = height - 50
+            p.setFont("Helvetica", 11)
+        p.drawString(50, y, "Registro de asistencia en el periodo:")
+        y -= 18
+
+        for a in asistencias:
+            text = (
+                f"{a.fecha_hora.strftime('%d/%m/%Y %H:%M')} - "
+                f"{a.get_tipo_display()} "
+                f"(Retardo: {'Sí' if a.es_retardo else 'No'}, "
+                f"Falta: {'Sí' if a.es_falta else 'No'})"
+            )
+            if a.comentario:
+                text += f" - {a.comentario}"
+
+            if y < 50:
+                p.showPage()
+                y = height - 50
+                p.setFont("Helvetica", 11)
+
+            p.drawString(70, y, text)
+            y -= 16
+
+    if resumen_puntualidad:
+        if y < 90:
+            p.showPage()
+            y = height - 50
+            p.setFont("Helvetica", 11)
+
+        p.drawString(50, y, "Resumen de puntualidad:")
+        y -= 18
+
+        lines_res = [
+            f"Total de entradas: {resumen_puntualidad.get('total_entradas', 0)}",
+            f"Retardos: {resumen_puntualidad.get('retardos', 0)}",
+            f"Faltas: {resumen_puntualidad.get('faltas', 0)}",
+            f"Porcentaje de puntualidad: {resumen_puntualidad.get('puntualidad_pct', 0)}%",
+        ]
+        for line in lines_res:
+            if y < 50:
+                p.showPage()
+                y = height - 50
+                p.setFont("Helvetica", 11)
+            p.drawString(70, y, line)
             y -= 16
 
     if comentarios:
