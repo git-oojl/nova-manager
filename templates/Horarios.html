@@ -546,94 +546,160 @@
             }
         }
     </style>
-    <script>
-        function abrirModalBusqueda(tipo) {
-            const modal = document.getElementById('busquedaModal');
-            const titulo = document.getElementById('modalTitulo');
-            const input = document.getElementById('busquedaInput');
-            const icon = document.getElementById('modalIcon');
-            
-            if (tipo === 'nombre') {
-                titulo.textContent = 'Buscar por Nombre';
-                input.placeholder = 'Ingresa el nombre completo del empleado';
-                icon.textContent = '👤';
-            } else if (tipo === 'id') {
-                titulo.textContent = 'Buscar por ID';
-                input.placeholder = 'Ingresa el ID del empleado';
-                icon.textContent = '🆔';
-            } else if (tipo === 'horario') {
-                titulo.textContent = 'Buscar por Horario';
-                input.placeholder = 'Ej: 09:00 - 17:00';
-                icon.textContent = '🕐';
-            }
-            
-            input.value = '';
-            modal.classList.add('active');
-            input.focus();
+ <script>
+    let tipoBusquedaActual = null;
+
+    function abrirModalBusqueda(tipo) {
+        tipoBusquedaActual = tipo;
+        const modal = document.getElementById('busquedaModal');
+        const titulo = document.getElementById('modalTitulo');
+        const input = document.getElementById('busquedaInput');
+        const icon = document.getElementById('modalIcon');
+
+        if (tipo === 'nombre') {
+            titulo.textContent = 'Buscar por Nombre';
+            input.placeholder = 'Ingresa el nombre completo del empleado';
+            icon.textContent = '👤';
+        } else if (tipo === 'id') {
+            titulo.textContent = 'Buscar por ID';
+            input.placeholder = 'Ingresa el ID del empleado';
+            icon.textContent = '🆔';
+        } else if (tipo === 'horario') {
+            titulo.textContent = 'Buscar por Horario';
+            input.placeholder = 'Ingresa el tipo de turno (Matutino, Vespertino, etc.)';
+            icon.textContent = '🕐';
         }
+
+        input.value = '';
+        modal.classList.add('active');
+        input.focus();
+    }
 
         function cerrarModal() {
-            const modal = document.getElementById('busquedaModal');
-            modal.classList.remove('active');
-        }
+        const modal = document.getElementById('busquedaModal');
+        modal.classList.remove('active');
+    }
 
-        function realizarBusqueda() {
-            const input = document.getElementById('busquedaInput');
-            const valor = input.value.trim();
-            
-            if (valor === '') {
-                alert('⚠️ Por favor ingresa un valor para buscar.');
-                return;
-            }
-            
-            alert(`🔍 Buscando: ${valor}`);
-            cerrarModal();
-        }
-
-        function asignarHorario(event) {
-            event.preventDefault();
-            
-            const id = document.getElementById('id').value.trim();
-            const nombre = document.getElementById('nombre').value.trim();
-            const entrada = document.getElementById('entrada').value.trim();
-            const salida = document.getElementById('salida').value.trim();
-            
-            if (id === '' || nombre === '' || entrada === '' || salida === '') {
-                alert('⚠️ Por favor completa todos los campos obligatorios.');
-                return false;
-            }
-            
-            alert('✅ Horario asignado exitosamente');
+    function realizarBusqueda() {
+        const valor = document.getElementById('busquedaInput').value.trim();
+        if (!tipoBusquedaActual || !valor) {
+            alert('⚠️ Ingresa un valor para buscar.');
             return false;
         }
 
-        function limpiarFormulario() {
-            if (confirm('¿Deseas limpiar todos los campos del formulario?')) {
-                document.getElementById('horarioForm').reset();
-            }
+        const params = new URLSearchParams(window.location.search);
+        params.set('busqueda_tipo', tipoBusquedaActual);
+        params.set('busqueda_valor', valor);
+        window.location.search = params.toString();
+        return false;
+    }
+
+    function validarHorario(event) {
+        const id = document.getElementById('id').value.trim();
+        const turno = document.getElementById('turno').value.trim();
+        const entrada = document.getElementById('entrada').value.trim();
+        const salida = document.getElementById('salida').value.trim();
+
+        if (!id || !turno || !entrada || !salida) {
+            event.preventDefault();
+            alert('⚠️ Por favor completa todos los campos obligatorios.');
+            return false;
+        }
+        return true;
+    }
+
+    function limpiarFormulario() {
+        if (confirm('¿Deseas limpiar todos los campos del formulario?')) {
+            document.getElementById('horarioForm').reset();
+        }
+    }
+
+    // --- nuevo: presets de turno ---
+    function aplicarTurnoPreset() {
+        const select = document.getElementById('turno');
+        const entrada = document.getElementById('entrada');
+        const salida = document.getElementById('salida');
+        if (!select || !entrada || !salida) return;
+
+        switch (select.value) {
+            case 'matutino':
+                entrada.value = '07:00';
+                salida.value = '15:00';
+                break;
+            case 'vespertino':
+                entrada.value = '15:00';
+                salida.value = '23:00';
+                break;
+            case 'nocturno':
+                entrada.value = '23:00';
+                salida.value = '07:00';
+                break;
+            case 'mixto':
+                entrada.value = '08:00';
+                salida.value = '16:00';
+                break;
+            case 'personalizado':
+                // no tocar los campos; el usuario los definirá
+                break;
+            default:
+                entrada.value = '';
+                salida.value = '';
+        }
+    }
+
+    // al salir del campo ID, pedir datos del empleado al backend
+    function buscarEmpleadoHorario() {
+        const empleadoId = document.getElementById('id').value.trim();
+        if (!empleadoId) {
+            return;
+        }
+        const params = new URLSearchParams(window.location.search);
+        params.set('empleado_id', empleadoId);
+        window.location.search = params.toString();
+    }
+
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function (event) {
+        const modal = document.getElementById('busquedaModal');
+        if (event.target === modal) {
+            cerrarModal();
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputBusqueda = document.getElementById('busquedaInput');
+        if (inputBusqueda) {
+            inputBusqueda.addEventListener('keyup', function (event) {
+                if (event.key === 'Enter') {
+                    realizarBusqueda();
+                }
+            });
         }
 
-        // Cerrar modal al hacer clic fuera
-        window.onclick = function(event) {
-            const modal = document.getElementById('busquedaModal');
-            if (event.target === modal) {
-                cerrarModal();
-            }
+        const turnoSelect = document.getElementById('turno');
+        const entrada = document.getElementById('entrada');
+        const salida = document.getElementById('salida');
+
+        // Si ya hay un turno seleccionado al cargar, aplicar preset
+        if (turnoSelect && turnoSelect.value && turnoSelect.value !== 'personalizado') {
+            aplicarTurnoPreset();
         }
 
-        // Buscar con Enter en el modal
-        document.addEventListener('DOMContentLoaded', function() {
-            const input = document.getElementById('busquedaInput');
-            if (input) {
-                input.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        realizarBusqueda();
-                    }
-                });
-            }
-        });
-    </script>
+        // Si el usuario cambia manualmente la hora, marcar como "personalizado"
+        if (turnoSelect && entrada && salida) {
+            entrada.addEventListener('input', function () {
+                if (turnoSelect.value !== 'personalizado') {
+                    turnoSelect.value = 'personalizado';
+                }
+            });
+            salida.addEventListener('input', function () {
+                if (turnoSelect.value !== 'personalizado') {
+                    turnoSelect.value = 'personalizado';
+                }
+            });
+        }
+    });
+</script>
 </head>
 <body>
     <!-- Barra superior -->
@@ -675,29 +741,29 @@
         </div>
 
         <!-- Estadísticas -->
-        <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <div class="stat-content">
-                    <h3>342</h3>
-                    <p>Empleados con Horario</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔄</div>
-                <div class="stat-content">
-                    <h3>5</h3>
-                    <p>Turnos Activos</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">⏰</div>
-                <div class="stat-content">
-                    <h3>24/7</h3>
-                    <p>Cobertura Total</p>
-                </div>
-            </div>
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+            <h3>{{ empleados_con_horario }}</h3>
+            <p>Empleados con Horario</p>
         </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-content">
+            <h3>{{ turnos_activos }}</h3>
+            <p>Turnos Activos</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">⏰</div>
+        <div class="stat-content">
+            <h3>{{ cobertura_porcentaje }}%</h3>
+            <p>Cobertura Total</p>
+        </div>
+    </div>
+</div>
 
         <!-- Opciones de búsqueda -->
         <div class="search-options">
@@ -721,18 +787,34 @@
         <!-- Formulario -->
         <div class="form-container">
             <div class="form-header">
-                <h2>Asignar Horario</h2>
-                <p>Complete la información para asignar un nuevo horario al empleado</p>
-            </div>
+    <h2>Asignar Horario</h2>
+    <p>Complete la información para asignar un nuevo horario al empleado</p>
 
-            <form id="horarioForm" onsubmit="return asignarHorario(event)">
+    {% if mensaje %}
+        <p style="margin-top:10px; color:#1b5e20; font-weight:600;">
+            {{ mensaje }}
+        </p>
+    {% endif %}
+    {% if error %}
+        <p style="margin-top:10px; color:#c0392b; font-weight:600;">
+            {{ error }}
+        </p>
+    {% endif %}
+</div>
+            <form id="horarioForm" method="post" onsubmit="return validarHorario(event)">
+            {% csrf_token %}
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="id">
                             ID del Empleado
                             <span class="required-indicator">*</span>
                         </label>
-                        <input type="text" id="id" name="id" placeholder="Ej: EMP001">
+                        <input type="text"
+       id="id"
+       name="id"
+       placeholder="Ej: 1"
+       value="{{ empleado_id_prefill }}"
+       onblur="buscarEmpleadoHorario()">
                     </div>
 
                     <div class="form-group">
@@ -740,7 +822,12 @@
                             Nombre del Empleado
                             <span class="required-indicator">*</span>
                         </label>
-                        <input type="text" id="nombre" name="nombre" placeholder="Nombre completo">
+                        <input type="text"
+       id="nombre"
+       name="nombre"
+       placeholder="Nombre completo"
+       value="{{ empleado_nombre_prefill }}"
+       readonly>
                     </div>
 
                     <div class="form-group full-width">
@@ -748,7 +835,7 @@
                             Turno
                             <span class="required-indicator">*</span>
                         </label>
-                        <select id="turno" name="turno">
+                        <select id="turno" name="turno" onchange="aplicarTurnoPreset()">
                             <option value="">Seleccionar turno...</option>
                             <option value="matutino">🌅 Matutino (07:00 - 15:00)</option>
                             <option value="vespertino">🌆 Vespertino (15:00 - 23:00)</option>
@@ -774,12 +861,55 @@
                 <button type="submit" class="submit-btn">
                     <span>✅</span> Asignar Horario
                 </button>
-            </form>
+
+                </form>
         </div>
+
+       <!-- Horarios Asignados (tabla) -->
+        <div class="form-container" style="margin-top: 30px;">
+    <div class="form-header">
+        <h2>Horarios Asignados</h2>
+        <p>Listado de empleados con su horario actual</p>
     </div>
 
-    <!-- Modal de Búsqueda -->
-    <div id="busquedaModal" class="modal">
+    {% if horarios %}
+        <div style="overflow-x:auto; margin-top: 10px;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.92em;">
+                <thead>
+                    <tr style="background:#f3f8f3;">
+                        <th style="text-align:left; padding:8px;">ID</th>
+                        <th style="text-align:left; padding:8px;">Nombre</th>
+                        <th style="text-align:left; padding:8px;">Turno</th>
+                        <th style="text-align:left; padding:8px;">Entrada</th>
+                        <th style="text-align:left; padding:8px;">Salida</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in horarios %}
+                        <tr style="border-top:1px solid #e0e0e0;">
+                            <td style="padding:8px;">{{ h.empleado.id }}</td>
+                            <td style="padding:8px;">
+                                {{ h.empleado.nombre }} {{ h.empleado.apellido }}
+                            </td>
+                            <td style="padding:8px;">{{ h.nombre_turno }}</td>
+                            <td style="padding:8px;">{{ h.hora_inicio|time:"H:i" }}</td>
+                            <td style="padding:8px;">{{ h.hora_fin|time:"H:i" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p style="margin-top:10px; color:#555;">
+            No hay horarios asignados todavía.
+        </p>
+    {% endif %}
+</div>
+
+</div> <!-- .main-content -->
+
+<!-- Modal de Búsqueda -->
+<div id="busquedaModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-icon" id="modalIcon">🔍</div>

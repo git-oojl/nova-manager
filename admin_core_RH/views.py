@@ -10,7 +10,7 @@ from .forms import ContactForm, EmployeeSignUpForm
 from django.contrib.auth.decorators import login_required
 from .decorators import admin_required
 
-from .models import Empleado as EmpleadoModel, Permiso
+from .models import Empleado as EmpleadoModel, Permiso, Horario, Asistencia
 
 from django.db.models import Q
 from django.http import HttpResponse
@@ -539,10 +539,124 @@ def Permisos(request):
     }
     return render(request, "Permisos.html", context)
 
+from datetime import datetime
+from django.db.models import Q
+
 @login_required
 @admin_required(redirect_to='Menu')
 def Horarios(request):
-    return render(request, 'Horarios.html')
+    mensaje = None
+    error = None
+    empleado = None
+
+    # --------- POST: asignar / actualizar horario ----------
+    if request.method == "POST":
+        emp_id = (request.POST.get("id") or "").strip()
+        turno = (request.POST.get("turno") or "").strip()
+        entrada = (request.POST.get("entrada") or "").strip()
+        salida = (request.POST.get("salida") or "").strip()
+
+        if not emp_id or not turno or not entrada or not salida:
+            error = "Por favor completa todos los campos obligatorios."
+        else:
+            try:
+                empleado = EmpleadoModel.objects.get(pk=int(emp_id))
+            except (ValueError, EmpleadoModel.DoesNotExist):
+                error = "No se encontró el empleado indicado."
+
+        if empleado and not error:
+            try:
+                hora_inicio = datetime.strptime(entrada, "%H:%M").time()
+                hora_fin = datetime.strptime(salida, "%H:%M").time()
+            except ValueError:
+                hora_inicio = hora_fin = None
+
+            if not hora_inicio or not hora_fin:
+                error = "Las horas no tienen un formato válido (HH:MM)."
+            else:
+                nombre_turno_map = {
+                    "matutino": "Matutino",
+                    "vespertino": "Vespertino",
+                    "nocturno": "Nocturno",
+                    "mixto": "Mixto",
+                    "personalizado": "Personalizado",
+                }
+                nombre_turno = nombre_turno_map.get(turno, turno)
+
+                # opcional: desactivar horarios anteriores del empleado
+                Horario.objects.filter(empleado=empleado, activo=True).update(activo=False)
+
+                Horario.objects.create(
+                    empleado=empleado,
+                    nombre_turno=nombre_turno,
+                    hora_inicio=hora_inicio,
+                    hora_fin=hora_fin,
+                    activo=True,
+                )
+                mensaje = "Horario asignado correctamente."
+
+        # valores para rellenar el formulario después del POST
+        empleado_id_prefill = emp_id
+        empleado_nombre_prefill = ""
+        if empleado:
+            empleado_nombre_prefill = f"{empleado.nombre} {empleado.apellido}".strip()
+
+    else:
+        # --------- GET simple: pre-relleno por ID ----------
+        empleado_id_prefill = (request.GET.get("empleado_id") or "").strip()
+        empleado_nombre_prefill = ""
+        if empleado_id_prefill:
+            try:
+                emp = EmpleadoModel.objects.get(pk=int(empleado_id_prefill))
+                empleado_nombre_prefill = f"{emp.nombre} {emp.apellido}".strip()
+            except (ValueError, EmpleadoModel.DoesNotExist):
+                empleado_nombre_prefill = ""
+
+    # --------- filtros para la tabla ----------
+    busqueda_tipo = (request.GET.get("busqueda_tipo") or "").strip()
+    busqueda_valor = (request.GET.get("busqueda_valor") or "").strip()
+
+    horarios_qs = Horario.objects.select_related("empleado").filter(activo=True)
+
+    if busqueda_valor:
+        if busqueda_tipo == "id":
+            try:
+                horarios_qs = horarios_qs.filter(empleado__id=int(busqueda_valor))
+            except ValueError:
+                horarios_qs = horarios_qs.none()
+        elif busqueda_tipo == "nombre":
+            horarios_qs = horarios_qs.filter(
+                Q(empleado__nombre__icontains=busqueda_valor) |
+                Q(empleado__apellido__icontains=busqueda_valor)
+            )
+        elif busqueda_tipo == "horario":
+            horarios_qs = horarios_qs.filter(nombre_turno__icontains=busqueda_valor)
+
+    horarios = horarios_qs.order_by("empleado__nombre", "empleado__apellido")
+
+    # --------- estadísticas superiores ----------
+    total_empleados = EmpleadoModel.objects.count()
+    empleados_con_horario = (
+        Horario.objects.filter(activo=True).values("empleado").distinct().count()
+    )
+    turnos_activos = (
+        Horario.objects.filter(activo=True).values("nombre_turno").distinct().count()
+    )
+    cobertura_porcentaje = int(empleados_con_horario * 100 / total_empleados) if total_empleados else 0
+
+    context = {
+        "horarios": horarios,
+        "empleados_con_horario": empleados_con_horario,
+        "turnos_activos": turnos_activos,
+        "cobertura_porcentaje": cobertura_porcentaje,
+        "mensaje": mensaje,
+        "error": error,
+        "empleado_id_prefill": empleado_id_prefill,
+        "empleado_nombre_prefill": empleado_nombre_prefill,
+        "busqueda_tipo": busqueda_tipo,
+        "busqueda_valor": busqueda_valor,
+    }
+    return render(request, "Horarios.html", context)
 
 def signup_employee(request):
     if request.method == "POST":
