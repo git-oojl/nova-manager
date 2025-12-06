@@ -164,7 +164,6 @@ def Empleado(request):
     return render(request, "Empleado.html", context)
 
 @login_required
-@admin_required(redirect_to="Menu")
 def Asistencia(request):
     today = timezone.localdate()
     now = timezone.localtime()
